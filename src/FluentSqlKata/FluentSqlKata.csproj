@@ -9,6 +9,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>sql;query;orm;sqlkata;database;fluent</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>The fluent way to build sql queries</Description>
   </PropertyGroup>
 
   <ItemGroup>
