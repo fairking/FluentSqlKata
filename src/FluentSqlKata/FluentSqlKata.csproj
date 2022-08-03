@@ -2,7 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>1.0.0-beta1</Version>
+    <PackageProjectUrl>https://github.com/fairking/FluentSqlKata</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/fairking/FluentSqlKata</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>sql;query;orm;sqlkata;database;fluent</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="SqlKata" Version="2.3.7" />
