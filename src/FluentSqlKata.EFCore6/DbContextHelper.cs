@@ -162,12 +162,12 @@ namespace FluentSqlKata.EFCore6
             return Convert.ChangeType(obj, u_to);
         }
 
-        public static PropertyInfo[] GetWritableProperties(this Type type)
+        private static PropertyInfo[] GetWritableProperties(this Type type)
         {
             return type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
         }
 
-        public static Type GetNullableUnderlyingType(this Type type)
+        private static Type GetNullableUnderlyingType(this Type type)
         {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 return Nullable.GetUnderlyingType(type);
@@ -175,7 +175,7 @@ namespace FluentSqlKata.EFCore6
                 return type;
         }
 
-        public static object GetDefaultValue(this Type t)
+        private static object GetDefaultValue(this Type t)
         {
             if (t.IsValueType && Nullable.GetUnderlyingType(t) == null)
                 return Activator.CreateInstance(t);
