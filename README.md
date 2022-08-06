@@ -17,7 +17,7 @@ $ dotnet add package FluentSqlKata
 ```
 Using Nuget Package Manager
 ```
-PM> Install-Package SqlKata.QueryMan
+PM> Install-Package FluentSqlKata
 ```
 
 ## How to use
