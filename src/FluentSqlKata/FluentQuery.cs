@@ -774,12 +774,18 @@ namespace FluentSqlKata
 
         private static string GetTableName<A>()
         {
-            var tableName = typeof(A).GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>()?.Name;
+            var attribute = typeof(A).GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>();
+
+            var tableName = attribute?.Name;
+            var schemaName = attribute?.Schema;
 
             if (string.IsNullOrWhiteSpace(tableName))
                 tableName = typeof(A).Name;
 
-            return tableName;
+            if (!string.IsNullOrWhiteSpace(schemaName))
+                tableName = schemaName + "." + tableName;
+
+			return tableName;
         }
 
         private static string GetAliasName<A>(Expression<Func<A>> alias)

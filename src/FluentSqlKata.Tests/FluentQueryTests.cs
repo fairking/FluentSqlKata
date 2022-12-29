@@ -7,7 +7,7 @@ namespace FluentSqlKata.Tests
     public class FluentQueryTests
     {
         [Fact]
-        public void Basic()
+        public void T01_Basic()
         {
             Customer myCust = null;
             (string CustomerId, string CustomerName) result = default;
@@ -25,7 +25,7 @@ namespace FluentSqlKata.Tests
         }
 
         [Fact]
-        public void Where()
+        public void T02_Where()
         {
             Customer myCust = null;
             (string CustomerId, string CustomerName) result = default;
@@ -44,7 +44,7 @@ namespace FluentSqlKata.Tests
         }
 
         [Fact]
-        public void Join()
+        public void T03_Join()
         {
             Contact myCont = null;
             Customer myCust = null;
@@ -66,7 +66,7 @@ namespace FluentSqlKata.Tests
         }
 
         [Fact]
-        public void JoinBuilder()
+        public void T04_JoinBuilder()
         {
             Contact myCont = null;
             Customer myCust = null;
@@ -87,7 +87,7 @@ namespace FluentSqlKata.Tests
         }
 
         [Fact]
-        public void GroupBy()
+        public void T05_GroupBy()
         {
             Customer myCust = null;
             Contact myCont = null;
@@ -109,7 +109,7 @@ namespace FluentSqlKata.Tests
         }
 
         [Fact]
-        public void OrderBy()
+        public void T06_OrderBy()
         {
             Customer myCust = null;
 
@@ -125,7 +125,7 @@ namespace FluentSqlKata.Tests
         }
 
         [Fact]
-        public void OrderByAlias()
+        public void T07_OrderByAlias()
         {
             Customer myCust = null;
             CustomerModel model = null;
@@ -143,7 +143,7 @@ namespace FluentSqlKata.Tests
         }
 
         [Fact]
-        public void SkipTake()
+        public void T08_SkipTake()
         {
             Customer myCust = null;
 
@@ -159,20 +159,35 @@ namespace FluentSqlKata.Tests
             Assert.Equal("SELECT * FROM (SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id], ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS [row_num] FROM [Customer] AS [myCust]) AS [results_wrapper] WHERE [row_num] BETWEEN 11 AND 30", query_str);
         }
 
-        [Fact]
-        public void PerPage()
-        {
-            Customer myCust = null;
+		[Fact]
+		public void T09_PerPage()
+		{
+			Customer myCust = null;
 
-            var query = FluentQuery.Query()
-                .SelectAll(() => myCust)
-                .ForPage(2, 10)
-                ;
+			var query = FluentQuery.Query()
+				.SelectAll(() => myCust)
+				.ForPage(2, 10)
+				;
 
-            var query_str = new SqlServerCompiler().Compile(query).ToString();
+			var query_str = new SqlServerCompiler().Compile(query).ToString();
 
-            Assert.NotNull(query_str);
-            Assert.Equal("SELECT * FROM (SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id], ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS [row_num] FROM [Customer] AS [myCust]) AS [results_wrapper] WHERE [row_num] BETWEEN 11 AND 20", query_str);
-        }
-    }
+			Assert.NotNull(query_str);
+			Assert.Equal("SELECT * FROM (SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id], ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS [row_num] FROM [Customer] AS [myCust]) AS [results_wrapper] WHERE [row_num] BETWEEN 11 AND 20", query_str);
+		}
+
+		[Fact]
+		public void T10_Schema()
+		{
+			BirdWithSchema bird = null;
+
+			var query = FluentQuery.Query()
+				.SelectAll(() => bird)
+				;
+
+			var query_str = new SqlServerCompiler().Compile(query).ToString();
+
+			Assert.NotNull(query_str);
+			Assert.Equal("SELECT [bird].[Name] AS [Name], [bird].[Id] AS [Id] FROM [OtherDatabase].[dbo].[Birds] AS [bird]", query_str);
+		}
+	}
 }
