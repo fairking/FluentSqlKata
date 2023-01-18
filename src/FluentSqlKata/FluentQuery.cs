@@ -362,25 +362,25 @@ namespace FluentSqlKata
             return query;
         }
 
-        public static Q WhereIn<Q, T, TValue>(this Q query, Expression<Func<T>> column, Query subquery) where Q : BaseQuery<Q>
+        public static Q WhereIn<Q, T>(this Q query, Expression<Func<T>> column, Query subquery) where Q : BaseQuery<Q>
         {
             query.WhereIn($"{GetAliasNameFromPropery(column)}.{GetPropertyName(column)}", subquery);
             return query;
         }
 
-        public static Q OrWhereIn<Q, T, TValue>(this Q query, Expression<Func<T>> column, Query subquery) where Q : BaseQuery<Q>
+        public static Q OrWhereIn<Q, T>(this Q query, Expression<Func<T>> column, Query subquery) where Q : BaseQuery<Q>
         {
             query.OrWhereIn($"{GetAliasNameFromPropery(column)}.{GetPropertyName(column)}", subquery);
             return query;
         }
 
-        public static Q WhereNotIn<Q, T, TValue>(this Q query, Expression<Func<T>> column, Query subquery) where Q : BaseQuery<Q>
+        public static Q WhereNotIn<Q, T>(this Q query, Expression<Func<T>> column, Query subquery) where Q : BaseQuery<Q>
         {
             query.WhereNotIn($"{GetAliasNameFromPropery(column)}.{GetPropertyName(column)}", subquery);
             return query;
         }
 
-        public static Q OrWhereNotIn<Q, T, TValue>(this Q query, Expression<Func<T>> column, Query subquery) where Q : BaseQuery<Q>
+        public static Q OrWhereNotIn<Q, T>(this Q query, Expression<Func<T>> column, Query subquery) where Q : BaseQuery<Q>
         {
             query.OrWhereNotIn($"{GetAliasNameFromPropery(column)}.{GetPropertyName(column)}", subquery);
             return query;
