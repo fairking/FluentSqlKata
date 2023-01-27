@@ -41,36 +41,46 @@ namespace FluentSqlKata
             return query.From($"{GetTableName<A>()} AS {GetAliasName(alias)}");
         }
 
-        #endregion Query/From
+		#endregion Query/From
 
-        #region Selects
+		#region Selects
 
-        public static Query Select<A>(this Query query, Expression<Func<A>> alias, Query subquery)
-        {
-            var aliasName = GetAliasName(alias);
-            query.Select(subquery, aliasName);
-            return query;
-        }
+		public static Query Select<A>(this Query query, Expression<Func<A>> alias, Query subquery)
+		{
+			var aliasName = GetAliasName(alias);
+			query.Select(subquery, aliasName);
+			return query;
+		}
 
-        public static Query SelectRaw<A>(this Query query, Expression<Func<A>> alias, string queryFormat, params Expression<Func<object>>[] columns)
-        {
-            var aliasName = GetAliasName(alias);
-            var queryRaw = FormatQueryRaw(queryFormat, columns);
-            query.GetWrapper().SelectsRaw.Add(aliasName, queryRaw);
-            query.SelectRaw($"{queryRaw} AS {aliasName}");
-            return query;
-        }
+		public static Query SelectRaw<A>(this Query query, Expression<Func<A>> alias, string queryFormat, params Expression<Func<object>>[] columns)
+		{
+			var aliasName = GetAliasName(alias);
+			return query.SelectRaw(aliasName, queryFormat, columns: columns);
+		}
 
-        public static Query Select<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            var aliasName = GetAliasName(alias);
-            var columnName = $"{GetAliasNameFromPropery(column)}.{GetPropertyName(column)}";
-            query.GetWrapper().Selects.Add(aliasName, columnName);
-            query.Select($"{columnName} AS {aliasName}");
-            return query;
-        }
+		public static Query SelectRaw(this Query query, string alias, string queryFormat, params Expression<Func<object>>[] columns)
+		{
+			var queryRaw = FormatQueryRaw(queryFormat, columns);
+			query.GetWrapper().SelectsRaw.Add(alias, queryRaw);
+			query.SelectRaw($"{queryRaw} AS {alias}");
+			return query;
+		}
 
-        public static Query SelectAll<T>(this Query query)
+		public static Query Select<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			var aliasName = GetAliasName(alias);
+			return query.Select(aliasName, column);
+		}
+
+		public static Query Select<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			var columnName = $"{GetAliasNameFromPropery(column)}.{GetPropertyName(column)}";
+			query.GetWrapper().Selects.Add(alias, columnName);
+			query.Select($"{columnName} AS {alias}");
+			return query;
+		}
+
+		public static Query SelectAll<T>(this Query query)
         {
             query.From<T>();
 
@@ -84,21 +94,21 @@ namespace FluentSqlKata
             return query;
         }
 
-        public static Query SelectAll<T>(this Query query, Expression<Func<T>> alias)
-        {
-            query.From(alias);
+		public static Query SelectAll<T>(this Query query, Expression<Func<T>> alias)
+		{
+			query.From(alias);
 
-            foreach (var col in GetColumns<T>())
-            {
-                var columnName = $"{GetAliasName(alias)}.{col.Value}";
-                query.GetWrapper().Selects.Add(col.Key, columnName);
-                query.Select($"{columnName} AS {col.Key}");
-            }
+			foreach (var col in GetColumns<T>())
+			{
+				var columnName = $"{GetAliasName(alias)}.{col.Value}";
+				query.GetWrapper().Selects.Add(col.Key, columnName);
+				query.Select($"{columnName} AS {col.Key}");
+			}
 
-            return query;
-        }
+			return query;
+		}
 
-        public static Query SelectFunc<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column, string func, bool aggregate = false)
+		public static Query SelectFunc<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column, string func, bool aggregate = false)
         {
             var aliasName = GetAliasName<A>(alias);
             var columnName = $"{func}({GetAliasNameFromPropery(column)}.{GetPropertyName(column)})";
@@ -152,25 +162,37 @@ namespace FluentSqlKata
             return query;
         }
 
-        public static Q WhereColumns<Q, T1, T2>(this Q query, Expression<Func<T1>> column1, Expression<Func<T2>> column2, string op = "=") where Q : BaseQuery<Q>
-        {
-            query.WhereColumns(
-                $"{GetAliasNameFromPropery(column1)}.{GetPropertyName(column1)}",
-                op,
-                $"{GetAliasNameFromPropery(column2)}.{GetPropertyName(column2)}");
-            return query;
-        }
+		public static Q WhereColumns<Q, T1, T2>(this Q query, Expression<Func<T1>> column1, Expression<Func<T2>> column2, string op = "=") where Q : BaseQuery<Q>
+		{
+			query.WhereColumns(
+				$"{GetAliasNameFromPropery(column1)}.{GetPropertyName(column1)}",
+				op,
+				$"{GetAliasNameFromPropery(column2)}.{GetPropertyName(column2)}");
+			return query;
+		}
 
-        public static Q OrWhereColumns<Q, T1, T2>(this Q query, Expression<Func<T1>> column1, Expression<Func<T2>> column2, string op = "=") where Q : BaseQuery<Q>
-        {
-            query.OrWhereColumns(
-                $"{GetAliasNameFromPropery(column1)}.{GetPropertyName(column1)}",
-                op,
-                $"{GetAliasNameFromPropery(column2)}.{GetPropertyName(column2)}");
-            return query;
-        }
+		public static Q WhereColumns<Q, T1, T2>(this Q query, Expression<Func<T1>> column1, string second, string op = "=") where Q : BaseQuery<Q>
+		{
+			query.WhereColumns($"{GetAliasNameFromPropery(column1)}.{GetPropertyName(column1)}", op, second);
+			return query;
+		}
 
-        public static Q WhereNull<Q, T>(this Q query, Expression<Func<T>> column) where Q : BaseQuery<Q>
+		public static Q OrWhereColumns<Q, T1, T2>(this Q query, Expression<Func<T1>> column1, Expression<Func<T2>> column2, string op = "=") where Q : BaseQuery<Q>
+		{
+			query.OrWhereColumns(
+				$"{GetAliasNameFromPropery(column1)}.{GetPropertyName(column1)}",
+				op,
+				$"{GetAliasNameFromPropery(column2)}.{GetPropertyName(column2)}");
+			return query;
+		}
+
+		public static Q OrWhereColumns<Q, T1, T2>(this Q query, Expression<Func<T1>> column1, string second, string op = "=") where Q : BaseQuery<Q>
+		{
+			query.OrWhereColumns($"{GetAliasNameFromPropery(column1)}.{GetPropertyName(column1)}", op, second);
+			return query;
+		}
+
+		public static Q WhereNull<Q, T>(this Q query, Expression<Func<T>> column) where Q : BaseQuery<Q>
         {
             query.WhereNull($"{GetAliasNameFromPropery(column)}.{GetPropertyName(column)}");
             return query;
@@ -809,10 +831,10 @@ namespace FluentSqlKata
         /// <exception cref="ArgumentException"></exception>
         private static string GetPropertyName<T>(Expression<Func<T>> property, bool parent = false)
         {
-            var propertyName = GetMemberName(property, parent: parent);
+            var memberName = GetMemberName(property, parent: parent);
 
-            if (propertyName != null)
-                return propertyName;
+            if (memberName != null)
+                return memberName.Replace(".", "_");
             else
                 throw new ArgumentException($"The expression cannot be evaluated");
         }
@@ -831,18 +853,36 @@ namespace FluentSqlKata
                 case ExpressionType.Convert:
                     return GetMemberName(((UnaryExpression)expression).Operand, parent: parent);
                 case ExpressionType.Lambda:
-                    var member = (parent
-                            ? ((((LambdaExpression)expression).Body as MemberExpression)?.Expression as MemberExpression)?.Member
-                            : (((LambdaExpression)expression).Body as MemberExpression)?.Member
-                        ) ?? throw new NotSupportedException(expression.NodeType.ToString(), new Exception($"Cannot get member name from expression {expression}."));
-                    return member.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name
-                        ?? member.GetCustomAttribute<SqlKata.ColumnAttribute>()?.Name
-                        ?? member.Name;
+                    var memberExpression = ((LambdaExpression)expression).Body as MemberExpression
+                        ?? throw new NotSupportedException(expression.NodeType.ToString(), new Exception($"Cannot get member name from expression {expression}."));
+                    if (parent)
+                        return (memberExpression.Expression as MemberExpression)?.Member.Name
+                            ?? throw new NotSupportedException(expression.NodeType.ToString(), new Exception($"Cannot get parent member name from expression {expression}."));
+					else
+                        return memberExpression.Member.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name
+						    ?? memberExpression.Member.GetCustomAttribute<SqlKata.ColumnAttribute>()?.Name
+						    ?? FormatNestedMemberName(memberExpression);
                 default:
                     throw new NotSupportedException(expression.NodeType.ToString(),
                         new Exception($"Cannot get member name from expression {expression}."));
             }
         }
+
+        private static string FormatNestedMemberName(MemberExpression expression)
+        {
+            if (expression == null)
+                throw new ArgumentNullException(nameof(expression));
+
+            var name = expression.Member.Name;
+
+            while (expression.Expression is MemberExpression memberExpression && memberExpression.Member.MemberType == MemberTypes.Property)
+            {
+                name = memberExpression.Member.Name + "." + name;
+                expression = memberExpression;
+			}
+
+            return name;
+		}
 
         private static string FormatQueryRaw(string queryFormat, params Expression<Func<object>>[] columns)
         {

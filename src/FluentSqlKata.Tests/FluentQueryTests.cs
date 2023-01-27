@@ -189,5 +189,25 @@ namespace FluentSqlKata.Tests
 			Assert.NotNull(query_str);
 			Assert.Equal("SELECT [bird].[Name] AS [Name], [bird].[Id] AS [Id] FROM [OtherDatabase].[dbo].[Birds] AS [bird]", query_str);
 		}
+
+		[Fact]
+		public void T11_NestedFields()
+		{
+            Contact cnt = null;
+
+            NestedContactModel model = null;
+
+			var query = FluentQuery.Query(() => cnt)
+				.Select(() => model.FirstName, () => cnt.FirstName)
+				.Select(() => model.LastName, () => cnt.LastName)
+				.Select(() => model.Initials.FirstName, () => cnt.FirstName)
+				.Select(() => model.Initials.LastName, () => cnt.LastName)
+				;
+
+			var query_str = new SqlServerCompiler().Compile(query).ToString();
+
+			Assert.NotNull(query_str);
+			Assert.Equal("SELECT [cnt].[FirstName] AS [FirstName], [cnt].[LastName] AS [LastName], [cnt].[FirstName] AS [Initials_FirstName], [cnt].[LastName] AS [Initials_LastName] FROM [Contacts] AS [cnt]", query_str);
+		}
 	}
 }
