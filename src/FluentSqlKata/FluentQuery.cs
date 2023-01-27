@@ -52,13 +52,13 @@ namespace FluentSqlKata
 			return query;
 		}
 
-		public static Query SelectRaw<A>(this Query query, Expression<Func<A>> alias, string queryFormat, params Expression<Func<object>>[] columns)
+		public static Query SelectRawFormat<A>(this Query query, Expression<Func<A>> alias, string queryFormat, params Expression<Func<object>>[] columns)
 		{
 			var aliasName = GetAliasName(alias);
-			return query.SelectRaw(aliasName, queryFormat, columns: columns);
+			return query.SelectRawFormat(aliasName, queryFormat, columns: columns);
 		}
 
-		public static Query SelectRaw(this Query query, string alias, string queryFormat, params Expression<Func<object>>[] columns)
+		public static Query SelectRawFormat(this Query query, string alias, string queryFormat, params Expression<Func<object>>[] columns)
 		{
 			var queryRaw = FormatQueryRaw(queryFormat, columns);
 			query.GetWrapper().SelectsRaw.Add(alias, queryRaw);
@@ -171,7 +171,7 @@ namespace FluentSqlKata
 			return query;
 		}
 
-		public static Q WhereColumns<Q, T1, T2>(this Q query, Expression<Func<T1>> column1, string second, string op = "=") where Q : BaseQuery<Q>
+		public static Q WhereColumns<Q, T1>(this Q query, Expression<Func<T1>> column1, string second, string op = "=") where Q : BaseQuery<Q>
 		{
 			query.WhereColumns($"{GetAliasNameFromPropery(column1)}.{GetPropertyName(column1)}", op, second);
 			return query;
@@ -186,7 +186,7 @@ namespace FluentSqlKata
 			return query;
 		}
 
-		public static Q OrWhereColumns<Q, T1, T2>(this Q query, Expression<Func<T1>> column1, string second, string op = "=") where Q : BaseQuery<Q>
+		public static Q OrWhereColumns<Q, T1>(this Q query, Expression<Func<T1>> column1, string second, string op = "=") where Q : BaseQuery<Q>
 		{
 			query.OrWhereColumns($"{GetAliasNameFromPropery(column1)}.{GetPropertyName(column1)}", op, second);
 			return query;
@@ -850,11 +850,17 @@ namespace FluentSqlKata
                     return parent
                         ? ((MemberExpression)((MemberExpression)expression).Expression).Member.Name
                         : ((MemberExpression)expression).Member.Name;
+
                 case ExpressionType.Convert:
                     return GetMemberName(((UnaryExpression)expression).Operand, parent: parent);
+
                 case ExpressionType.Lambda:
-                    var memberExpression = ((LambdaExpression)expression).Body as MemberExpression
-                        ?? throw new NotSupportedException(expression.NodeType.ToString(), new Exception($"Cannot get member name from expression {expression}."));
+                    if (((LambdaExpression)expression).Body.NodeType == ExpressionType.Convert)
+                        return GetMemberName((((LambdaExpression)expression).Body as UnaryExpression).Operand, parent: parent);
+
+					var memberExpression = ((LambdaExpression)expression).Body as MemberExpression
+						?? throw new NotSupportedException(expression.NodeType.ToString(), new Exception($"Cannot get member name from expression {expression}."));
+
                     if (parent)
                         return (memberExpression.Expression as MemberExpression)?.Member.Name
                             ?? throw new NotSupportedException(expression.NodeType.ToString(), new Exception($"Cannot get parent member name from expression {expression}."));
@@ -862,6 +868,7 @@ namespace FluentSqlKata
                         return memberExpression.Member.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name
 						    ?? memberExpression.Member.GetCustomAttribute<SqlKata.ColumnAttribute>()?.Name
 						    ?? FormatNestedMemberName(memberExpression);
+
                 default:
                     throw new NotSupportedException(expression.NodeType.ToString(),
                         new Exception($"Cannot get member name from expression {expression}."));

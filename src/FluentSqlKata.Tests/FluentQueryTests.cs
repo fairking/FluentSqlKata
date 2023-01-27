@@ -132,7 +132,7 @@ namespace FluentSqlKata.Tests
 
             var query = FluentQuery.Query()
                 .From(() => myCust)
-                .SelectRaw(() => model.Name, "ISNULL({0}, 'Uknown')", () => myCust.Name)
+                .SelectRawFormat(() => model.Name, "ISNULL({0}, 'Uknown')", () => myCust.Name)
                 .OrderByAlias(() => model.Name)
                 ;
 
@@ -193,9 +193,9 @@ namespace FluentSqlKata.Tests
 		[Fact]
 		public void T11_NestedFields()
 		{
-            Contact cnt = null;
+			Contact cnt = null;
 
-            NestedContactModel model = null;
+			NestedContactModel model = null;
 
 			var query = FluentQuery.Query(() => cnt)
 				.Select(() => model.FirstName, () => cnt.FirstName)
@@ -208,6 +208,22 @@ namespace FluentSqlKata.Tests
 
 			Assert.NotNull(query_str);
 			Assert.Equal("SELECT [cnt].[FirstName] AS [FirstName], [cnt].[LastName] AS [LastName], [cnt].[FirstName] AS [Initials_FirstName], [cnt].[LastName] AS [Initials_LastName] FROM [Contacts] AS [cnt]", query_str);
+		}
+
+		[Fact]
+		public void T12_FormattedRawQuery()
+		{
+			Contact cnt = null;
+
+			var query = FluentQuery.Query(() => cnt)
+				.SelectRawFormat("FullName", queryFormat: "{0} + ' ' + {1}", () => cnt.FirstName, () => cnt.LastName)
+				.SelectRawFormat("Age", queryFormat: "{0} + 'y'", () => cnt.Age)
+				;
+
+			var query_str = new SqlServerCompiler().Compile(query).ToString();
+
+			Assert.NotNull(query_str);
+			Assert.Equal("SELECT cnt.FirstName + ' ' + cnt.LastName AS FullName, cnt.Age + 'y' AS Age FROM [Contacts] AS [cnt]", query_str);
 		}
 	}
 }

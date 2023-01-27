@@ -21,6 +21,8 @@ namespace FluentSqlKata.Tests.Entities
 
         public virtual string LastName { get; protected set; }
 
+        public virtual int Age { get; set; }
+
         [Column("contact_customer_id")]
         public virtual int CustomerId { get; set; }
 
