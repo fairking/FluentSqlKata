@@ -1,6 +1,7 @@
 using FluentSqlKata.Tests.Entities;
 using FluentSqlKata.Tests.Models;
 using SqlKata.Compilers;
+using System.Linq.Expressions;
 
 namespace FluentSqlKata.Tests
 {
@@ -218,12 +219,62 @@ namespace FluentSqlKata.Tests
 			var query = FluentQuery.Query(() => cnt)
 				.SelectRawFormat("FullName", queryFormat: "{0} + ' ' + {1}", () => cnt.FirstName, () => cnt.LastName)
 				.SelectRawFormat("Age", queryFormat: "{0} + 'y'", () => cnt.Age)
+				.WhereRawFormat("{0} LIKE ?", columns: new[] { FluentQuery.Expression(() => cnt.FirstName) }, bindings: new[] { "John" })
 				;
 
 			var query_str = new SqlServerCompiler().Compile(query).ToString();
 
 			Assert.NotNull(query_str);
-			Assert.Equal("SELECT cnt.FirstName + ' ' + cnt.LastName AS FullName, cnt.Age + 'y' AS Age FROM [Contacts] AS [cnt]", query_str);
+			Assert.Equal("SELECT cnt.FirstName + ' ' + cnt.LastName AS FullName, cnt.Age + 'y' AS Age FROM [Contacts] AS [cnt] WHERE cnt.FirstName LIKE 'John'", query_str);
+		}
+
+		[Fact]
+		public void T12_HelperFunctions()
+		{
+			Contact cnt = null;
+			NestedContactModel model = null;
+
+			// Column name
+			{
+				var result = FluentQuery.Column(() => cnt.CustomerId);
+
+				Assert.Equal("contact_customer_id", result);
+			}
+
+			// Column name
+			{
+				var result = FluentQuery.ColumnWithAlias(() => cnt.CustomerId);
+
+				Assert.Equal("cnt.contact_customer_id", result);
+			}
+
+			// Column with alias name
+			{
+				var result = FluentQuery.AliasFromColumn(() => cnt.CustomerId);
+
+				Assert.Equal("cnt", result);
+			}
+
+			// Alias name
+			{
+				var result = FluentQuery.Alias(() => model.FirstName);
+
+				Assert.Equal("FirstName", result);
+			}
+
+			// Table name
+			{
+				var result = FluentQuery.Table<Contact>();
+
+				Assert.Equal("Contacts", result);
+			}
+
+			// Table name
+			{
+				var result = FluentQuery.Table(() => cnt);
+
+				Assert.Equal("Contacts", result);
+			}
 		}
 	}
 }
