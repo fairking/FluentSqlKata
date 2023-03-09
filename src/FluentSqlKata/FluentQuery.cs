@@ -41,6 +41,12 @@ namespace FluentSqlKata
             return query.From($"{Table<A>()} AS {Alias(alias)}");
         }
 
+		public static Query As<A>(this Query query, Expression<Func<A>> alias)
+		{
+			var aliasName = Alias(alias);
+			return query.As(aliasName);
+		}
+
 		#endregion Query/From
 
 		#region Selects
@@ -80,6 +86,14 @@ namespace FluentSqlKata
 			return query;
 		}
 
+		public static Query Select<T>(this Query query, Expression<Func<T>> column)
+		{
+			var columnName = Property(column);
+			var fullName = $"{AliasFromColumn(column)}.{columnName}";
+			query.GetWrapper().Selects.Add(columnName, fullName);
+			return query.SelectRaw(fullName);
+		}
+
 		public static Query SelectAll<T>(this Query query)
         {
             query.From<T>();
@@ -109,16 +123,22 @@ namespace FluentSqlKata
 		}
 
 		public static Query SelectFunc<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column, string func, bool aggregate = false)
-        {
-            var aliasName = Alias<A>(alias);
-            var columnName = $"{func}({AliasFromColumn(column)}.{Property(column)})";
-            if (aggregate)
-                query.GetWrapper().SelectAggrs.Add(aliasName, columnName);
-            else
-                query.GetWrapper().Selects.Add(aliasName, columnName);
-            query.SelectRaw($"{columnName} AS {aliasName}");
-            return query;
-        }
+		{
+			var aliasName = Alias<A>(alias);
+            query.SelectFunc(aliasName, column, func, aggregate);
+			return query;
+		}
+
+		public static Query SelectFunc<T>(this Query query, string alias, Expression<Func<T>> column, string func, bool aggregate = false)
+		{
+			var columnName = $"{func}({AliasFromColumn(column)}.{Property(column)})";
+			if (aggregate)
+				query.GetWrapper().SelectAggrs.Add(alias, columnName);
+			else
+				query.GetWrapper().Selects.Add(alias, columnName);
+			query.SelectRaw($"{columnName} AS {alias}");
+			return query;
+		}
 
 		#endregion Selects
 
@@ -646,95 +666,155 @@ namespace FluentSqlKata
             return query;
         }
 
-        #endregion Orders
+		#endregion Orders
 
-        #region Aggregations
+		#region Aggregations
 
-        public static Query SelectCount<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            query.SelectFunc(alias, column, "COUNT", aggregate: true);
-            return query;
-        }
+		public static Query SelectCount<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "COUNT", aggregate: true);
+			return query;
+		}
 
-        public static Query SelectMin<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            query.SelectFunc(alias, column, "MIN", aggregate: true);
-            return query;
-        }
+		public static Query SelectCount<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "COUNT", aggregate: true);
+			return query;
+		}
 
-        public static Query SelectMax<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            query.SelectFunc(alias, column, "MIN", aggregate: true);
-            return query;
-        }
+		public static Query SelectMin<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "MIN", aggregate: true);
+			return query;
+		}
 
-        public static Query SelectAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            query.SelectFunc(alias, column, "AVG", aggregate: true);
-            return query;
-        }
+		public static Query SelectMin<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "MIN", aggregate: true);
+			return query;
+		}
 
-        public static Query SelectSum<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            query.SelectFunc(alias, column, "SUM", aggregate: true);
-            return query;
-        }
+		public static Query SelectMax<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "MAX", aggregate: true);
+			return query;
+		}
 
-        public static Query AsCount<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            var aliasName = Alias<A>(alias);
-            var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-            query.GetWrapper().SelectAggrs.Add(aliasName, columnName);
-            query.AsCount(new[] { $"{columnName} AS {aliasName}" });
-            return query;
-        }
+		public static Query SelectMax<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "MAX", aggregate: true);
+			return query;
+		}
 
-        public static Query AsAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            var aliasName = Alias<A>(alias);
-            var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-            query.GetWrapper().SelectAggrs.Add(aliasName, columnName);
-            query.AsAvg($"{columnName} AS {aliasName}");
-            return query;
-        }
+		public static Query SelectAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "AVG", aggregate: true);
+			return query;
+		}
 
-        public static Query AsAverage<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            var aliasName = Alias<A>(alias);
-            var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-            query.GetWrapper().SelectAggrs.Add(aliasName, columnName);
-            query.AsAverage($"{columnName} AS {aliasName}");
-            return query;
-        }
+		public static Query SelectAvg<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "AVG", aggregate: true);
+			return query;
+		}
 
-        public static Query AsSum<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            var aliasName = Alias<A>(alias);
-            var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-            query.GetWrapper().SelectAggrs.Add(aliasName, columnName);
-            query.AsSum($"{columnName} AS {aliasName}");
-            return query;
-        }
+		public static Query SelectSum<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "SUM", aggregate: true);
+			return query;
+		}
 
-        public static Query AsMax<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            var aliasName = Alias<A>(alias);
-            var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-            query.GetWrapper().SelectAggrs.Add(aliasName, columnName);
-            query.AsMax($"{columnName} AS {aliasName}");
-            return query;
-        }
+		public static Query SelectSum<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			query.SelectFunc(alias, column, "SUM", aggregate: true);
+			return query;
+		}
 
-        public static Query AsMin<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-        {
-            var aliasName = Alias<A>(alias);
-            var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-            query.GetWrapper().SelectAggrs.Add(aliasName, columnName);
-            query.AsMin($"{columnName} AS {aliasName}");
-            return query;
-        }
+		public static Query AsCount<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			var aliasName = Alias(alias);
+			return query.AsCount(aliasName, column);
+		}
 
-        public static Query GroupBy<T>(this Query query, Expression<Func<T>> column)
+		public static Query AsCount<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
+			query.GetWrapper().SelectAggrs.Add(alias, columnName);
+			query.AsCount(new[] { $"{columnName} AS {alias}" });
+			return query;
+		}
+
+		public static Query AsAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			var aliasName = Alias(alias);
+			return query.AsAvg(aliasName, alias);
+		}
+
+		public static Query AsAvg<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
+			query.GetWrapper().SelectAggrs.Add(alias, columnName);
+			query.AsAvg($"{columnName} AS {alias}");
+			return query;
+		}
+
+		public static Query AsAverage<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			var aliasName = Alias(alias);
+			return query.AsAverage(aliasName, column);
+		}
+
+		public static Query AsAverage<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
+			query.GetWrapper().SelectAggrs.Add(alias, columnName);
+			query.AsAverage($"{columnName} AS {alias}");
+			return query;
+		}
+
+		public static Query AsSum<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			var aliasName = Alias(alias);
+			return query.AsSum(aliasName, column);
+		}
+
+		public static Query AsSum<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
+			query.GetWrapper().SelectAggrs.Add(alias, columnName);
+			query.AsSum($"{columnName} AS {alias}");
+			return query;
+		}
+
+		public static Query AsMax<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			var aliasName = Alias(alias);
+			return query.AsMax(aliasName, column);
+		}
+
+		public static Query AsMax<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
+			query.GetWrapper().SelectAggrs.Add(alias, columnName);
+			query.AsMax($"{columnName} AS {alias}");
+			return query;
+		}
+
+		public static Query AsMin<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+		{
+			var aliasName = Alias<A>(alias);
+			return query.AsMin(aliasName, column);
+		}
+
+		public static Query AsMin<T>(this Query query, string alias, Expression<Func<T>> column)
+		{
+			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
+			query.GetWrapper().SelectAggrs.Add(alias, columnName);
+			query.AsMin($"{columnName} AS {alias}");
+			return query;
+		}
+
+		public static Query GroupBy<T>(this Query query, Expression<Func<T>> column)
         {
             var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
             query.GroupBy(new[] { columnName });
