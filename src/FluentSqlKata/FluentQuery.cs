@@ -659,12 +659,19 @@ namespace FluentSqlKata
             return query;
         }
 
-        public static Query OrderByRaw(this Query query, string queryFormat, params Expression<Func<object>>[] columns)
-        {
-            queryFormat = FormatQueryRaw(queryFormat, columns);
-            query.OrderByRaw(queryFormat);
-            return query;
-        }
+		public static Query OrderByRawFormat(this Query query, string queryFormat, params Expression<Func<object>>[] columns)
+		{
+			queryFormat = FormatQueryRaw(queryFormat, columns);
+			query.OrderByRaw(queryFormat);
+			return query;
+		}
+
+		public static Query OrderByRawFormat(this Query query, string queryFormat, Expression<Func<object>>[] columns, params object[] bindings)
+		{
+			queryFormat = FormatQueryRaw(queryFormat, columns);
+			query.OrderByRaw(queryFormat, bindings: bindings);
+			return query;
+		}
 
 		#endregion Orders
 
