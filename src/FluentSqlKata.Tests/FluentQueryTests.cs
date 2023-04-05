@@ -157,7 +157,7 @@ namespace FluentSqlKata.Tests
             var query_str = new SqlServerCompiler().Compile(query).ToString();
 
             Assert.NotNull(query_str);
-            Assert.Equal("SELECT * FROM (SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id], ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS [row_num] FROM [Customer] AS [myCust]) AS [results_wrapper] WHERE [row_num] BETWEEN 11 AND 30", query_str);
+            Assert.Equal("SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id] FROM [Customer] AS [myCust] ORDER BY (SELECT 0) OFFSET 10 ROWS FETCH NEXT 20 ROWS ONLY", query_str);
         }
 
 		[Fact]
@@ -173,7 +173,7 @@ namespace FluentSqlKata.Tests
 			var query_str = new SqlServerCompiler().Compile(query).ToString();
 
 			Assert.NotNull(query_str);
-			Assert.Equal("SELECT * FROM (SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id], ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS [row_num] FROM [Customer] AS [myCust]) AS [results_wrapper] WHERE [row_num] BETWEEN 11 AND 20", query_str);
+			Assert.Equal("SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id] FROM [Customer] AS [myCust] ORDER BY (SELECT 0) OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY", query_str);
 		}
 
 		[Fact]
