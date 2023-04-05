@@ -879,6 +879,21 @@ namespace FluentSqlKata
 
 		#endregion Havings
 
+		#region Misc
+
+		public static Q If<Q>(this Q query, bool condition, Func<Q, Q> ifTrue, Func<Q, Q> ifFalse = null) where Q : BaseQuery<Q> 
+		{
+            if (ifTrue == null)
+                throw new ArgumentNullException(nameof(ifTrue));
+
+            if (condition)
+                return ifTrue.Invoke(query);
+			else
+                return ifFalse != null ? ifFalse.Invoke(query) : query;
+		}
+
+		#endregion Misc
+
 		#region Public Methods
 
 		/// <summary>

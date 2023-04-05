@@ -220,16 +220,57 @@ namespace FluentSqlKata.Tests
 				.SelectRawFormat("FullName", queryFormat: "{0} + ' ' + {1}", () => cnt.FirstName, () => cnt.LastName)
 				.SelectRawFormat("Age", queryFormat: "{0} + 'y'", () => cnt.Age)
 				.WhereRawFormat("{0} LIKE ?", columns: new[] { FluentQuery.Expression(() => cnt.FirstName) }, bindings: new[] { "John" })
+				.If(true,
+					q => q.Where(() => cnt.Age, 12, ">"),
+					q => q.Where(() => cnt.Age, 16, ">"))
 				;
 
 			var query_str = new SqlServerCompiler().Compile(query).ToString();
 
 			Assert.NotNull(query_str);
-			Assert.Equal("SELECT cnt.FirstName + ' ' + cnt.LastName AS FullName, cnt.Age + 'y' AS Age FROM [Contacts] AS [cnt] WHERE cnt.FirstName LIKE 'John'", query_str);
+			Assert.Equal("SELECT cnt.FirstName + ' ' + cnt.LastName AS FullName, cnt.Age + 'y' AS Age FROM [Contacts] AS [cnt] WHERE cnt.FirstName LIKE 'John' AND [cnt].[Age] > 12", query_str);
 		}
 
 		[Fact]
-		public void T12_HelperFunctions()
+		public void T13_ConditionalQuery()
+		{
+			Contact cnt = null;
+
+			var queryBuilder = (bool ageCheck) =>
+			{
+				return FluentQuery.Query(() => cnt)
+					.Select(() => cnt.FirstName)
+					.Select(() => cnt.LastName)
+					.If(ageCheck,
+						q => q.Where(() => cnt.Age, 18, ">"),
+						q => q.Where(() => cnt.Age, 16, ">"))
+					.If(ageCheck, q => q.Where(() => cnt.Age, 60, "<="))
+					;
+			};
+
+			// True
+			{
+				var query = queryBuilder(true);
+
+				var query_str = new SqlServerCompiler().Compile(query).ToString();
+
+				Assert.NotNull(query_str);
+				Assert.Equal("SELECT cnt.FirstName, cnt.LastName FROM [Contacts] AS [cnt] WHERE [cnt].[Age] > 18 AND [cnt].[Age] <= 60", query_str);
+			}
+
+			// False
+			{
+				var query = queryBuilder(false);
+
+				var query_str = new SqlServerCompiler().Compile(query).ToString();
+
+				Assert.NotNull(query_str);
+				Assert.Equal("SELECT cnt.FirstName, cnt.LastName FROM [Contacts] AS [cnt] WHERE [cnt].[Age] > 16", query_str);
+			}
+		}
+
+		[Fact]
+		public void T14_HelperFunctions()
 		{
 			Contact cnt = null;
 			NestedContactModel model = null;
