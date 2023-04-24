@@ -683,61 +683,91 @@ namespace FluentSqlKata
 			return query;
 		}
 
-		public static Query SelectCount<T>(this Query query, string alias, Expression<Func<T>> column)
-		{
-			query.SelectFunc(alias, column, "COUNT", aggregate: true);
-			return query;
-		}
+        public static Query SelectCount<T>(this Query query, string alias, Expression<Func<T>> column)
+        {
+            query.SelectFunc(alias, column, "COUNT", aggregate: true);
+            return query;
+        }
 
-		public static Query SelectMin<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+        public static Query SelectCount<T>(this Query query, Expression<Func<T>> column)
+        {
+            query.SelectCount(column, column);
+            return query;
+        }
+
+        public static Query SelectMin<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			query.SelectFunc(alias, column, "MIN", aggregate: true);
 			return query;
 		}
 
-		public static Query SelectMin<T>(this Query query, string alias, Expression<Func<T>> column)
-		{
-			query.SelectFunc(alias, column, "MIN", aggregate: true);
-			return query;
-		}
+        public static Query SelectMin<T>(this Query query, string alias, Expression<Func<T>> column)
+        {
+            query.SelectFunc(alias, column, "MIN", aggregate: true);
+            return query;
+        }
 
-		public static Query SelectMax<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+        public static Query SelectMin<T>(this Query query, Expression<Func<T>> column)
+        {
+            query.SelectMin(column, column);
+            return query;
+        }
+
+        public static Query SelectMax<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			query.SelectFunc(alias, column, "MAX", aggregate: true);
 			return query;
 		}
 
-		public static Query SelectMax<T>(this Query query, string alias, Expression<Func<T>> column)
-		{
-			query.SelectFunc(alias, column, "MAX", aggregate: true);
-			return query;
-		}
+        public static Query SelectMax<T>(this Query query, string alias, Expression<Func<T>> column)
+        {
+            query.SelectFunc(alias, column, "MAX", aggregate: true);
+            return query;
+        }
 
-		public static Query SelectAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+        public static Query SelectMax<T>(this Query query, Expression<Func<T>> column)
+        {
+            query.SelectMax(column, column);
+            return query;
+        }
+
+        public static Query SelectAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			query.SelectFunc(alias, column, "AVG", aggregate: true);
 			return query;
 		}
 
-		public static Query SelectAvg<T>(this Query query, string alias, Expression<Func<T>> column)
-		{
-			query.SelectFunc(alias, column, "AVG", aggregate: true);
-			return query;
-		}
+        public static Query SelectAvg<T>(this Query query, string alias, Expression<Func<T>> column)
+        {
+            query.SelectFunc(alias, column, "AVG", aggregate: true);
+            return query;
+        }
 
-		public static Query SelectSum<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+        public static Query SelectAvg<T>(this Query query, Expression<Func<T>> column)
+        {
+            query.SelectAvg(column, column);
+            return query;
+        }
+
+        public static Query SelectSum<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			query.SelectFunc(alias, column, "SUM", aggregate: true);
 			return query;
 		}
 
-		public static Query SelectSum<T>(this Query query, string alias, Expression<Func<T>> column)
-		{
-			query.SelectFunc(alias, column, "SUM", aggregate: true);
-			return query;
-		}
+        public static Query SelectSum<T>(this Query query, string alias, Expression<Func<T>> column)
+        {
+            query.SelectFunc(alias, column, "SUM", aggregate: true);
+            return query;
+        }
 
-		public static Query AsCount<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+        public static Query SelectSum<T>(this Query query, Expression<Func<T>> column)
+        {
+            query.SelectSum(column, column);
+            return query;
+        }
+
+        public static Query AsCount<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			var aliasName = Alias(alias);
 			return query.AsCount(aliasName, column);
