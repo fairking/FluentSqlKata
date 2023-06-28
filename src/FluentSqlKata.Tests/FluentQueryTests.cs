@@ -217,7 +217,9 @@ namespace FluentSqlKata.Tests
 			Contact cnt = null;
 
 			var query = FluentQuery.Query(() => cnt)
-				.SelectRawFormat("FullName", queryFormat: "{0} + ' ' + {1}", () => cnt.FirstName, () => cnt.LastName)
+				.SelectRawFormat("FullName", queryFormat: "ISNULL({0}, ?) + ' ' + ISNULL({1}, ?)",
+                    new[] { FluentQuery.Expression(() => cnt.FirstName), FluentQuery.Expression(() => cnt.LastName) },
+                    new[] { "John", "Smith" })
 				.SelectRawFormat("Age", queryFormat: "{0} + 'y'", () => cnt.Age)
 				.WhereRawFormat("{0} LIKE ?", columns: new[] { FluentQuery.Expression(() => cnt.FirstName) }, bindings: new[] { "John" })
 				.If(true,
@@ -228,7 +230,7 @@ namespace FluentSqlKata.Tests
 			var query_str = new SqlServerCompiler().Compile(query).ToString();
 
 			Assert.NotNull(query_str);
-			Assert.Equal("SELECT cnt.FirstName + ' ' + cnt.LastName AS FullName, cnt.Age + 'y' AS Age FROM [Contacts] AS [cnt] WHERE cnt.FirstName LIKE 'John' AND [cnt].[Age] > 12", query_str);
+			Assert.Equal("SELECT ISNULL(cnt.FirstName, 'John') + ' ' + ISNULL(cnt.LastName, 'Smith') AS FullName, cnt.Age + 'y' AS Age FROM [Contacts] AS [cnt] WHERE cnt.FirstName LIKE 'John' AND [cnt].[Age] > 12", query_str);
 		}
 
 		[Fact]

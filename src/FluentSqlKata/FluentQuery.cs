@@ -58,21 +58,51 @@ namespace FluentSqlKata
 			return query;
 		}
 
-		public static Query SelectRawFormat<A>(this Query query, Expression<Func<A>> alias, string queryFormat, params Expression<Func<object>>[] columns)
-		{
-			var aliasName = Alias(alias);
-			return query.SelectRawFormat(aliasName, queryFormat, columns: columns);
-		}
+        /// <summary>
+        /// Example: SelectRawFormat(() => dto.FullName, queryFormat: "{0} + ' ' + {1}", () => cnt.FirstName, () => cnt.LastName)
+        /// Results: SELECT FirstName + ' ' + LastName AS FullName
+        /// </summary>
+        public static Query SelectRawFormat<A>(this Query query, Expression<Func<A>> alias, string queryFormat, params Expression<Func<object>>[] columns)
+        {
+            var aliasName = Alias(alias);
+            return query.SelectRawFormat(aliasName, queryFormat, columns: columns);
+        }
 
-		public static Query SelectRawFormat(this Query query, string alias, string queryFormat, params Expression<Func<object>>[] columns)
-		{
-			var queryRaw = FormatQueryRaw(queryFormat, columns);
-			query.GetWrapper().SelectsRaw.Add(alias, queryRaw);
-			query.SelectRaw($"{queryRaw} AS {alias}");
-			return query;
-		}
+        /// <summary>
+        /// Example: SelectRawFormat(() => dto.Name, queryFormat: "ISNULL({0}, ?)", new[] { FluentQuery.Expression(() => cnt.FirstName) }, new[] { "John" })
+        /// Results: SELECT ISNULL(FirstName, 'John') AS Name
+        /// </summary>
+        public static Query SelectRawFormat<A>(this Query query, Expression<Func<A>> alias, string queryFormat, Expression<Func<object>>[] columns, object[] bindings)
+        {
+            var aliasName = Alias(alias);
+            return query.SelectRawFormat(aliasName, queryFormat, columns: columns, bindings: bindings);
+        }
 
-		public static Query Select<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+        /// <summary>
+        /// Example: SelectRawFormat("FullName", queryFormat: "{0} + ' ' + {1}", () => cnt.FirstName, () => cnt.LastName)
+        /// Results: SELECT FirstName + ' ' + LastName AS FullName
+        /// </summary>
+        public static Query SelectRawFormat(this Query query, string alias, string queryFormat, params Expression<Func<object>>[] columns)
+        {
+            var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
+            query.GetWrapper().SelectsRaw.Add(alias, queryRaw);
+            query.SelectRaw($"{queryRaw} AS {alias}");
+            return query;
+        }
+
+        /// <summary>
+        /// Example: SelectRawFormat("Name", queryFormat: "ISNULL({0}, ?)", new[] { FluentQuery.Expression(() => cnt.FirstName) }, new[] { "John" })
+        /// Results: SELECT ISNULL(FirstName, 'John') AS Name
+        /// </summary>
+        public static Query SelectRawFormat(this Query query, string alias, string queryFormat, Expression<Func<object>>[] columns, object[] bindings)
+        {
+            var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
+            query.GetWrapper().SelectsRaw.Add(alias, queryRaw);
+            query.SelectRaw($"{queryRaw} AS {alias}", bindings: bindings);
+            return query;
+        }
+
+        public static Query Select<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			var aliasName = Alias(alias);
 			return query.Select(aliasName, column);
@@ -140,17 +170,25 @@ namespace FluentSqlKata
 			return query;
 		}
 
-		#endregion Selects
+        #endregion Selects
 
-		#region Where
+        #region Where
 
-		public static Q WhereRawFormat<Q>(this Q query, string queryFormat, params Expression<Func<object>>[] columns) where Q : BaseQuery<Q>
+        /// <summary>
+        /// Example: WhereRawFormat("(LEN({0}) + LEN({1})) > 0", () => cnt.FirstName, () => cnt.LastName)
+        /// Results: WHERE (LEN(FirstName) + LEN(LastName)) > 0
+        /// </summary>
+        public static Q WhereRawFormat<Q>(this Q query, string queryFormat, params Expression<Func<object>>[] columns) where Q : BaseQuery<Q>
 		{
 			queryFormat = FormatQueryRaw(queryFormat, columns: columns);
 			query.WhereRaw(queryFormat);
 			return query;
 		}
 
+        /// <summary>
+        /// Example: WhereRawFormat("(LEN({0}) + LEN({1})) > 0", () => cnt.FirstName, () => cnt.LastName)
+        /// Results: WHERE (LEN(FirstName) + LEN(LastName)) > 0
+        /// </summary>
 		public static Q OrWhereRawFormat<Q>(this Q query, string queryFormat, params Expression<Func<object>>[] columns) where Q : BaseQuery<Q>
 		{
 			queryFormat = FormatQueryRaw(queryFormat, columns: columns);
@@ -158,6 +196,10 @@ namespace FluentSqlKata
 			return query;
 		}
 
+        /// <summary>
+        /// Example: WhereRawFormat("LEN({0}) > ?", new[] { FluentQuery.Expression(() => cnt.FirstName) }, new[] { 5 })
+        /// Results: WHERE LEN(FirstName) > 5
+        /// </summary>
 		public static Q WhereRawFormat<Q>(this Q query, string queryFormat, Expression<Func<object>>[] columns, object[] bindings) where Q : BaseQuery<Q>
 		{
 			queryFormat = FormatQueryRaw(queryFormat, columns: columns);
@@ -165,6 +207,10 @@ namespace FluentSqlKata
 			return query;
 		}
 
+        /// <summary>
+        /// Example: WhereRawFormat("LEN({0}) > ?", new[] { FluentQuery.Expression(() => cnt.FirstName) }, new[] { 5 })
+        /// Results: WHERE LEN(FirstName) > 5
+        /// </summary>
 		public static Q OrWhereRawFormat<Q>(this Q query, string queryFormat, Expression<Func<object>>[] columns, object[] bindings) where Q : BaseQuery<Q>
 		{
 			queryFormat = FormatQueryRaw(queryFormat, columns: columns);
