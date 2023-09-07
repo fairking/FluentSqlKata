@@ -149,6 +149,7 @@ namespace FluentSqlKata.Tests
             Customer myCust = null;
 
             var query = FluentQuery.Query()
+                .Distinct()
                 .SelectAll(() => myCust)
                 .Skip(10)
                 .Take(20)
@@ -157,7 +158,8 @@ namespace FluentSqlKata.Tests
             var query_str = new SqlServerCompiler().Compile(query).ToString();
 
             Assert.NotNull(query_str);
-            Assert.Equal("SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id] FROM [Customer] AS [myCust] ORDER BY (SELECT 0) OFFSET 10 ROWS FETCH NEXT 20 ROWS ONLY", query_str);
+            // TODO: https://github.com/sqlkata/querybuilder/issues/643#issuecomment-1709879159
+            Assert.Equal("SELECT DISTINCT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id] FROM [Customer] AS [myCust] ORDER BY (SELECT 0) OFFSET 10 ROWS FETCH NEXT 20 ROWS ONLY", query_str);
         }
 
 		[Fact]
@@ -166,6 +168,7 @@ namespace FluentSqlKata.Tests
 			Customer myCust = null;
 
 			var query = FluentQuery.Query()
+                .Distinct()
 				.SelectAll(() => myCust)
 				.ForPage(2, 10)
 				;
@@ -173,7 +176,8 @@ namespace FluentSqlKata.Tests
 			var query_str = new SqlServerCompiler().Compile(query).ToString();
 
 			Assert.NotNull(query_str);
-			Assert.Equal("SELECT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id] FROM [Customer] AS [myCust] ORDER BY (SELECT 0) OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY", query_str);
+            // TODO: https://github.com/sqlkata/querybuilder/issues/643#issuecomment-1709879159
+            Assert.Equal("SELECT DISTINCT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id] FROM [Customer] AS [myCust] ORDER BY (SELECT 0) OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY", query_str);
 		}
 
 		[Fact]
@@ -319,5 +323,5 @@ namespace FluentSqlKata.Tests
 				Assert.Equal("Contacts", result);
 			}
 		}
-	}
+    }
 }
