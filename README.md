@@ -6,7 +6,7 @@ Simple and very concrete, fluent way to build sql queries.
 
 - Fluent queries (you have more freedom than with `Linq`, `HQL` or `QueryOver`)
 - OrderByAlias (Dynamic way to order by columns in runtime)
-- Can be easily used with Entity Framework 6 without huge code changes (see [FluentSqlKata.EFCore6](https://github.com/fairking/FluentSqlKata/tree/main/src/FluentSqlKata.EFCore6/DbContextHelper.cs))
+- Can be easily used along with Entity Framework Core without huge code changes (see [FluentSqlKata.EFCore](https://github.com/fairking/FluentSqlKata/tree/main/src/FluentSqlKata.EFCore/DbContextHelper.cs))
 - All standart SqlKata features remain without changes
 
 ## Installation

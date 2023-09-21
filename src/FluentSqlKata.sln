@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentSqlKata", "FluentSqlK
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentSqlKata.Tests", "FluentSqlKata.Tests\FluentSqlKata.Tests.csproj", "{CBA6BDB5-AAC8-48C2-BDF4-18254FB52D09}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentSqlKata.EFCore6", "FluentSqlKata.EFCore6\FluentSqlKata.EFCore6.csproj", "{C01A9778-8631-421E-93B4-7F7861783FCF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentSqlKata.EFCore", "FluentSqlKata.EFCore\FluentSqlKata.EFCore.csproj", "{8A3A3FE0-F91D-415C-903E-CBB6D451C53D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{CBA6BDB5-AAC8-48C2-BDF4-18254FB52D09}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBA6BDB5-AAC8-48C2-BDF4-18254FB52D09}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBA6BDB5-AAC8-48C2-BDF4-18254FB52D09}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C01A9778-8631-421E-93B4-7F7861783FCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C01A9778-8631-421E-93B4-7F7861783FCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C01A9778-8631-421E-93B4-7F7861783FCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C01A9778-8631-421E-93B4-7F7861783FCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A3A3FE0-F91D-415C-903E-CBB6D451C53D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A3A3FE0-F91D-415C-903E-CBB6D451C53D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A3A3FE0-F91D-415C-903E-CBB6D451C53D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A3A3FE0-F91D-415C-903E-CBB6D451C53D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
