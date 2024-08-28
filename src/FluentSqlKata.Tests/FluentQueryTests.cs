@@ -1,7 +1,6 @@
 using FluentSqlKata.Tests.Entities;
 using FluentSqlKata.Tests.Models;
 using SqlKata.Compilers;
-using System.Linq.Expressions;
 
 namespace FluentSqlKata.Tests
 {
@@ -10,19 +9,38 @@ namespace FluentSqlKata.Tests
         [Fact]
         public void T01_Basic()
         {
-            Customer myCust = null;
-            (string CustomerId, string CustomerName) result = default;
+            // Table from class
+            {
+                Customer myCust = null;
+                (string CustomerId, string CustomerName) result = default;
 
-            var query = FluentQuery.Query()
-                .From(() => myCust)
-                .Select(() => result.CustomerId, () => myCust.Id)
-                .Select(() => result.CustomerName, () => myCust.Name)
-                ;
+                var query = FluentQuery.Query()
+                    .From(() => myCust)
+                    .Select(() => result.CustomerId, () => myCust.Id)
+                    .Select(() => result.CustomerName, () => myCust.Name)
+                    ;
 
-            var query_str = new SqlServerCompiler().Compile(query).ToString();
+                var query_str = new SqlServerCompiler().Compile(query).ToString();
 
-            Assert.NotNull(query_str);
-            Assert.Equal("SELECT [myCust].[Id] AS [Item1], [myCust].[Name] AS [Item2] FROM [Customer] AS [myCust]", query_str);
+                Assert.NotNull(query_str);
+                Assert.Equal("SELECT [myCust].[Id] AS [Item1], [myCust].[Name] AS [Item2] FROM [Customer] AS [myCust]", query_str);
+            }
+            // Custom table name
+            {
+                Customer myCust = null;
+                (string CustomerId, string CustomerName) result = default;
+
+                var query = FluentQuery.Query()
+                    .From("MyCustomers", () => myCust)
+                    .Select(() => result.CustomerId, () => myCust.Id)
+                    .Select(() => result.CustomerName, () => myCust.Name)
+                    ;
+
+                var query_str = new SqlServerCompiler().Compile(query).ToString();
+
+                Assert.NotNull(query_str);
+                Assert.Equal("SELECT [myCust].[Id] AS [Item1], [myCust].[Name] AS [Item2] FROM [MyCustomers] AS [myCust]", query_str);
+            }
         }
 
         [Fact]
@@ -47,23 +65,46 @@ namespace FluentSqlKata.Tests
         [Fact]
         public void T03_Join()
         {
-            Contact myCont = null;
-            Customer myCust = null;
-            (string FirstName, string LastName, string CustomerId, string CustomerName) result = default;
+            // Table name from class
+            {
+                Contact myCont = null;
+                Customer myCust = null;
+                (string FirstName, string LastName, string CustomerId, string CustomerName) result = default;
 
-            var query = FluentQuery.Query()
-                .From(() => myCont)
-                .Join(() => myCust, () => myCust.Id, () => myCont.CustomerId)
-                .Select(() => result.FirstName, () => myCont.FirstName)
-                .Select(() => result.LastName, () => myCont.LastName)
-                .Select(() => result.CustomerId, () => myCont.CustomerId)
-                .Select(() => result.CustomerName, () => myCust.Name)
-                ;
+                var query = FluentQuery.Query()
+                    .From(() => myCont)
+                    .Join(() => myCust, () => myCust.Id, () => myCont.CustomerId)
+                    .Select(() => result.FirstName, () => myCont.FirstName)
+                    .Select(() => result.LastName, () => myCont.LastName)
+                    .Select(() => result.CustomerId, () => myCont.CustomerId)
+                    .Select(() => result.CustomerName, () => myCust.Name)
+                    ;
 
-            var query_str = new SqlServerCompiler().Compile(query).ToString();
+                var query_str = new SqlServerCompiler().Compile(query).ToString();
 
-            Assert.NotNull(query_str);
-            Assert.Equal("SELECT [myCont].[FirstName] AS [Item1], [myCont].[LastName] AS [Item2], [myCont].[contact_customer_id] AS [Item3], [myCust].[Name] AS [Item4] FROM [Contacts] AS [myCont] \nINNER JOIN [Customer] AS [myCust] ON [myCust].[Id] = [myCont].[contact_customer_id]", query_str);
+                Assert.NotNull(query_str);
+                Assert.Equal("SELECT [myCont].[FirstName] AS [Item1], [myCont].[LastName] AS [Item2], [myCont].[contact_customer_id] AS [Item3], [myCust].[Name] AS [Item4] FROM [Contacts] AS [myCont] \nINNER JOIN [Customer] AS [myCust] ON [myCust].[Id] = [myCont].[contact_customer_id]", query_str);
+            }
+            // Custom table name
+            {
+                Contact myCont = null;
+                Customer myCust = null;
+                (string FirstName, string LastName, string CustomerId, string CustomerName) result = default;
+
+                var query = FluentQuery.Query()
+                    .From(() => myCont)
+                    .Join("MyCustomer", () => myCust, () => myCust.Id, () => myCont.CustomerId)
+                    .Select(() => result.FirstName, () => myCont.FirstName)
+                    .Select(() => result.LastName, () => myCont.LastName)
+                    .Select(() => result.CustomerId, () => myCont.CustomerId)
+                    .Select(() => result.CustomerName, () => myCust.Name)
+                    ;
+
+                var query_str = new SqlServerCompiler().Compile(query).ToString();
+
+                Assert.NotNull(query_str);
+                Assert.Equal("SELECT [myCont].[FirstName] AS [Item1], [myCont].[LastName] AS [Item2], [myCont].[contact_customer_id] AS [Item3], [myCust].[Name] AS [Item4] FROM [Contacts] AS [myCont] \nINNER JOIN [MyCustomer] AS [myCust] ON [myCust].[Id] = [myCont].[contact_customer_id]", query_str);
+            }
         }
 
         [Fact]

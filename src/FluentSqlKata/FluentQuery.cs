@@ -23,7 +23,12 @@ namespace FluentSqlKata
 
         public static Query Query<A>(Expression<Func<A>> alias)
         {
-            return new FluentQueryWrapper($"{Table<A>()} AS {Alias(alias)}");
+            return Query(Table<A>(), alias);
+        }
+
+        public static Query Query<A>(string table, Expression<Func<A>> alias)
+        {
+            return new FluentQueryWrapper($"{table} AS {Alias(alias)}");
         }
 
         public static Query From<A>(this Query query)
@@ -38,7 +43,12 @@ namespace FluentSqlKata
 
         public static Q From<Q, A>(this Q query, Expression<Func<A>> alias) where Q : BaseQuery<Q>
         {
-            return query.From($"{Table<A>()} AS {Alias(alias)}");
+            return query.From(Table<A>(), alias);
+        }
+
+        public static Q From<Q, A>(this Q query, string table, Expression<Func<A>> alias) where Q : BaseQuery<Q>
+        {
+            return query.From($"{table} AS {Alias(alias)}");
         }
 
         public static Q FromRawFormat<Q>(this Q query, string queryFormat, params Expression<Func<object>>[] columns) where Q : BaseQuery<Q>
@@ -638,8 +648,13 @@ namespace FluentSqlKata
 
         public static Query Join<A, J1, J2>(this Query query, Expression<Func<A>> alias, Expression<Func<J1>> column1, Expression<Func<J2>> column2, string op = "=")
         {
+            return query.Join(Table<A>(), alias, column1, column2, op);
+        }
+
+        public static Query Join<A, J1, J2>(this Query query, string table, Expression<Func<A>> alias, Expression<Func<J1>> column1, Expression<Func<J2>> column2, string op = "=")
+        {
             query.Join(
-                $"{Table<A>()} AS {Alias(alias)}",
+                $"{table} AS {Alias(alias)}",
                 $"{AliasFromColumn(column1)}.{Property(column1)}",
                 $"{AliasFromColumn(column2)}.{Property(column2)}",
                 op: op
@@ -649,8 +664,13 @@ namespace FluentSqlKata
 
         public static Query Join<A>(this Query query, Expression<Func<A>> alias, Func<Join, Join> joinQuery, string type = "inner join")
         {
+            return query.Join(Table<A>(), alias, joinQuery, type);
+        }
+
+        public static Query Join<A>(this Query query, string table, Expression<Func<A>> alias, Func<Join, Join> joinQuery, string type = "inner join")
+        {
             query.Join(
-                $"{Table<A>()} AS {Alias(alias)}",
+                $"{table} AS {Alias(alias)}",
                 joinQuery,
                 type: type
             );
@@ -659,8 +679,13 @@ namespace FluentSqlKata
 
         public static Query LeftJoin<A, J1, J2>(this Query query, Expression<Func<A>> alias, Expression<Func<J1>> firstColumn, Expression<Func<J2>> secondColumn, string op = "=")
         {
+            return query.LeftJoin(Table<A>(), alias, firstColumn, secondColumn, op);
+        }
+
+        public static Query LeftJoin<A, J1, J2>(this Query query, string table, Expression<Func<A>> alias, Expression<Func<J1>> firstColumn, Expression<Func<J2>> secondColumn, string op = "=")
+        {
             query.LeftJoin(
-                $"{Table<A>()} AS {Alias(alias)}",
+                $"{table} AS {Alias(alias)}",
                 $"{AliasFromColumn(firstColumn)}.{Property(firstColumn)}",
                 $"{AliasFromColumn(secondColumn)}.{Property(secondColumn)}",
                 op: op
@@ -670,8 +695,13 @@ namespace FluentSqlKata
 
         public static Query LeftJoin<A>(this Query query, Expression<Func<A>> alias, Func<Join, Join> joinQuery)
         {
+            return query.LeftJoin(Table<A>(), alias, joinQuery);
+        }
+
+        public static Query LeftJoin<A>(this Query query, string table, Expression<Func<A>> alias, Func<Join, Join> joinQuery)
+        {
             query.LeftJoin(
-                $"{Table<A>()} AS {Alias(alias)}",
+                $"{table} AS {Alias(alias)}",
                 joinQuery
             );
             return query;
@@ -679,8 +709,13 @@ namespace FluentSqlKata
 
         public static Query RightJoin<A, J1, J2>(this Query query, Expression<Func<A>> alias, Expression<Func<J1>> firstColumn, Expression<Func<J2>> secondColumn, string op = "=")
         {
+            return query.RightJoin(Table<A>(), alias, firstColumn, secondColumn, op);
+        }
+
+        public static Query RightJoin<A, J1, J2>(this Query query, string table, Expression<Func<A>> alias, Expression<Func<J1>> firstColumn, Expression<Func<J2>> secondColumn, string op = "=")
+        {
             query.RightJoin(
-                $"{Table<A>()} AS {Alias(alias)}",
+                $"{table} AS {Alias(alias)}",
                 $"{AliasFromColumn(firstColumn)}.{Property(firstColumn)}",
                 $"{AliasFromColumn(secondColumn)}.{Property(secondColumn)}",
                 op: op
@@ -690,8 +725,13 @@ namespace FluentSqlKata
 
         public static Query RightJoin<A>(this Query query, Expression<Func<A>> alias, Func<Join, Join> joinQuery)
         {
+            return query.RightJoin(Table<A>(), alias, joinQuery);
+        }
+
+        public static Query RightJoin<A>(this Query query, string table, Expression<Func<A>> alias, Func<Join, Join> joinQuery)
+        {
             query.RightJoin(
-                $"{Table<A>()} AS {Alias(alias)}",
+                $"{table} AS {Alias(alias)}",
                 joinQuery
             );
             return query;
@@ -700,6 +740,12 @@ namespace FluentSqlKata
         public static Query CrossJoin<A>(this Query query, Expression<Func<A>> alias)
         {
             query.CrossJoin(Table<A>());
+            return query;
+        }
+
+        public static Query CrossJoin<A>(this Query query, string table)
+        {
+            query.CrossJoin(table);
             return query;
         }
 
@@ -723,7 +769,13 @@ namespace FluentSqlKata
 
         public static Join JoinWith<A>(this Join join, Expression<Func<A>> alias)
         {
-            join.JoinWith($"{Table<A>()} AS {Alias(alias)}");
+            join.JoinWith(Table<A>(), alias);
+            return join;
+        }
+
+        public static Join JoinWith<A>(this Join join, string table, Expression<Func<A>> alias)
+        {
+            join.JoinWith($"{table} AS {Alias(alias)}");
             return join;
         }
 
