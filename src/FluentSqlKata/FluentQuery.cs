@@ -739,7 +739,7 @@ namespace FluentSqlKata
 
         public static Query CrossJoin<A>(this Query query, Expression<Func<A>> alias)
         {
-            query.CrossJoin(Table<A>());
+            query.CrossJoin(Alias(alias));
             return query;
         }
 
@@ -1426,25 +1426,32 @@ namespace FluentSqlKata
 
         #region Misc
 
-        public static Q If<Q>(this Q query, bool condition, Func<Q, Q> ifTrue, Func<Q, Q> ifFalse = null) where Q : BaseQuery<Q> 
-		{
+        public static Q If<Q>(this Q query, bool condition, Func<Q, Q> ifTrue, Func<Q, Q> ifFalse = null) where Q : BaseQuery<Q>
+        {
             if (ifTrue == null)
                 throw new ArgumentNullException(nameof(ifTrue));
 
             if (condition)
                 return ifTrue.Invoke(query);
-			else
+            else
                 return ifFalse != null ? ifFalse.Invoke(query) : query;
-		}
+        }
 
-		#endregion Misc
+        public static Query WithVariable(this Query query, string key, object value)
+        {
+            query.Variables.Add(key, value);
 
-		#region Public Methods
+            return query;
+        }
 
-		/// <summary>
-		/// Gets a column name from the entity (poco) property (eg. Column(() => cnt.FirstName) gives 'FirstName')
-		/// </summary>
-		public static string Column<T>(Expression<Func<T>> column)
+        #endregion Misc
+
+        #region Public Methods
+
+        /// <summary>
+        /// Gets a column name from the entity (poco) property (eg. Column(() => cnt.FirstName) gives 'FirstName')
+        /// </summary>
+        public static string Column<T>(Expression<Func<T>> column)
 		{
 			return Property<T>(column);
 		}
