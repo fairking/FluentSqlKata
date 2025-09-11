@@ -1586,11 +1586,15 @@ namespace FluentSqlKata
 
             var name = expression.Member.Name;
 
-            while (expression.Expression is MemberExpression memberExpression && memberExpression.Member.MemberType == MemberTypes.Property)
+            while (expression.Expression is MemberExpression memberExpression 
+                && (memberExpression.Member.MemberType == MemberTypes.Property 
+                    || (memberExpression.Member.MemberType == MemberTypes.Field && memberExpression.Member.Name == "Rest" && memberExpression.Member.DeclaringType.Name.StartsWith("ValueTuple`"))
+                )
+            )
             {
                 name = memberExpression.Member.Name + "." + name;
                 expression = memberExpression;
-			}
+            }
 
             return name;
 		}
