@@ -370,8 +370,9 @@ namespace FluentSqlKata.Tests
         {
             LargeEntity e = default;
 
+            // Note: Maximum of 7 items of Tuple are supported
             (int Prop1, int Prop2, DateTime Prop3, int Prop4, string Prop5,
-                string Prop6, DateTime Prop7, string Prop8, int Prop9, decimal Prop10) m = default;
+                string Prop6, DateTime Prop7) m = default;
 
             var query = FluentQuery.Query(() => e)
                 .Select(() => m.Prop1, () => e.Prop1)
@@ -381,18 +382,15 @@ namespace FluentSqlKata.Tests
                 .Select(() => m.Prop5, () => e.Prop5)
                 .Select(() => m.Prop6, () => e.Prop6)
                 .Select(() => m.Prop7, () => e.Prop7)
-                .Select(() => m.Prop8, () => e.Prop8)
-                .Select(() => m.Prop9, () => e.Prop9)
-                .Select(() => m.Prop10, () => e.Prop10)
 
-                .OrderByAlias(() => m.Prop9)
-                .OrderByColumn(() => e.Prop10)
+                .OrderByAlias(() => m.Prop6)
+                .OrderByColumn(() => e.Prop7)
                 ;
 
             var query_str = new SqlServerCompiler().Compile(query).ToString();
 
             Assert.NotNull(query_str);
-            Assert.Equal("SELECT [e].[Prop1] AS [Item1], [e].[Prop2] AS [Item2], [e].[Prop3] AS [Item3], [e].[Prop4] AS [Item4], [e].[Prop5] AS [Item5], [e].[Prop6] AS [Item6], [e].[Prop7] AS [Item7], [e].[Prop8] AS [Rest_Item1], [e].[Prop9] AS [Rest_Item2], [e].[Prop10] AS [Rest_Item3] FROM [LargeEntity] AS [e] ORDER BY [e].[Prop9], [e].[Prop10]", query_str);
+            Assert.Equal("SELECT [e].[Prop1] AS [Item1], [e].[Prop2] AS [Item2], [e].[Prop3] AS [Item3], [e].[Prop4] AS [Item4], [e].[Prop5] AS [Item5], [e].[Prop6] AS [Item6], [e].[Prop7] AS [Item7] FROM [LargeEntity] AS [e] ORDER BY [e].[Prop6], [e].[Prop7]", query_str);
         }
     }
 }
