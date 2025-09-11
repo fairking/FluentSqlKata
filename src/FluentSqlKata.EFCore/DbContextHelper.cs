@@ -6,9 +6,9 @@ using System.Collections;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace FluentSqlKata.EFCore6
 {
@@ -35,9 +35,9 @@ namespace FluentSqlKata.EFCore6
 
         #region Execution
 
-        public static async Task<T> ToScalarAsync<T>(this DbContext dbContext, Query query, CancellationToken cancellationToken = default)
+        public static async Task<TResult> ToScalarAsync<TResult>(this DbContext dbContext, Query query, CancellationToken cancellationToken = default)
         {
-            T result;
+            TResult result;
 
             var compiler = new SqlServerCompiler() { UseLegacyPagination = true };
 
@@ -62,7 +62,30 @@ namespace FluentSqlKata.EFCore6
                 {
                     var p = cmd.CreateParameter();
                     p.ParameterName = bind.Key;
-                    p.Value = bind.Value;
+                    if (bind.Value != null && bind.Value.GetType().GetNullableUnderlyingType().IsEnum)
+                    {
+                        p.Value = bind.Value.ToString();
+                    }
+                    else
+                    {
+                        p.Value = bind.Value;
+                    }
+                    cmd.Parameters.Add(p);
+                }
+
+                // Add query variables
+                foreach (var v in sql.Query.Variables)
+                {
+                    var p = cmd.CreateParameter();
+                    p.ParameterName = v.Key;
+                    if (v.Value != null && v.Value.GetType().GetNullableUnderlyingType().IsEnum)
+                    {
+                        p.Value = v.Value.ToString();
+                    }
+                    else
+                    {
+                        p.Value = v.Value;
+                    }
                     cmd.Parameters.Add(p);
                 }
 
@@ -71,16 +94,80 @@ namespace FluentSqlKata.EFCore6
                 if (sqlResult == null || sqlResult == DBNull.Value)
                     result = default;
                 else
-                    result = (T)sqlResult;
+                    result = (TResult)sqlResult;
             }
 
             return result;
         }
 
-        public static async Task<IEnumerable<T>> ToListAsync<T>(this DbContext dbContext, Query query, CancellationToken cancellationToken = default) where T : class, new()
+        public static async Task<TResult> ToSingleOrDefault<TResult>(this DbContext dbContext, Query query, CancellationToken cancellationToken = default) where TResult : new()
         {
-            IEnumerable<T> result;
+            var list = ToEnumerableAsync<TResult>(dbContext, query, cancellationToken).GetAsyncEnumerator(cancellationToken);
 
+            var first_exists = await list.MoveNextAsync();
+
+            TResult result;
+
+            if (first_exists)
+                result = list.Current;
+            else
+                result = default;
+
+            var second_exists = await list.MoveNextAsync();
+
+            await list.DisposeAsync();
+
+            if (second_exists)
+                throw new InvalidOperationException("The input sequence contains more than one element.");
+            else
+                return result;
+        }
+
+        public static async Task<TResult> ToSingleOrDefault<TResult>(this DbContext dbContext, TResult model, Query query, CancellationToken cancellationToken = default) where TResult : new()
+        {
+            return await ToSingleOrDefault<TResult>(dbContext, query, cancellationToken);
+        }
+
+        public static async Task<TResult> ToFirstOrDefault<TResult>(this DbContext dbContext, Query query, CancellationToken cancellationToken = default) where TResult : new()
+        {
+            var list = ToEnumerableAsync<TResult>(dbContext, query, cancellationToken).GetAsyncEnumerator(cancellationToken);
+
+            var exists = await list.MoveNextAsync();
+
+            TResult result;
+
+            if (exists)
+                result = list.Current;
+            else
+                result = default;
+
+            await list.DisposeAsync();
+
+            return result;
+        }
+
+        public static async Task<TResult> ToFirstOrDefault<TResult>(this DbContext dbContext, TResult model, Query query, CancellationToken cancellationToken = default) where TResult : new()
+        {
+            return await ToFirstOrDefault<TResult>(dbContext, query, cancellationToken);
+        }
+
+        public static async Task<List<TResult>> ToListAsync<TResult>(this DbContext dbContext, Query query, CancellationToken cancellationToken = default) where TResult : new()
+        {
+            var items = new List<TResult>();
+
+            await foreach (var item in dbContext.ToEnumerableAsync<TResult>(query, cancellationToken))
+                items.Add(item);
+
+            return items;
+        }
+
+        public static async Task<List<TResult>> ToListAsync<TResult>(this DbContext dbContext, TResult model, Query query, CancellationToken cancellationToken = default) where TResult : new()
+        {
+            return await ToListAsync<TResult>(dbContext, query, cancellationToken);
+        }
+
+        public static async IAsyncEnumerable<TResult> ToEnumerableAsync<TResult>(this DbContext dbContext, Query query, [EnumeratorCancellation] CancellationToken cancellationToken = default) where TResult : new()
+        {
             var compiler = new SqlServerCompiler() { UseLegacyPagination = true };
 
             // Compile to sql query
@@ -102,15 +189,43 @@ namespace FluentSqlKata.EFCore6
                 {
                     var p = cmd.CreateParameter();
                     p.ParameterName = bind.Key;
-                    p.Value = bind.Value;
+                    if (bind.Value != null && bind.Value.GetType().GetNullableUnderlyingType().IsEnum)
+                    {
+                        p.Value = bind.Value.ToString();
+                    }
+                    else
+                    {
+                        p.Value = bind.Value;
+                    }
+                    cmd.Parameters.Add(p);
+                }
+
+                // Add query variables
+                foreach (var v in sql.Query.Variables)
+                {
+                    var p = cmd.CreateParameter();
+                    p.ParameterName = v.Key;
+                    if (v.Value != null && v.Value.GetType().GetNullableUnderlyingType().IsEnum)
+                    {
+                        p.Value = v.Value.ToString();
+                    }
+                    else
+                    {
+                        p.Value = v.Value;
+                    }
                     cmd.Parameters.Add(p);
                 }
 
                 // Read rows
-                result = await cmd.ReadObjectsAsync<T>(cancellationToken);
+                await foreach (var item in cmd.ReadObjectsAsync<TResult>(cancellationToken))
+                    yield return item;
             }
+        }
 
-            return result;
+        public static async IAsyncEnumerable<TResult> ToEnumerableAsync<TResult>(this DbContext dbContext, TResult model, Query query, [EnumeratorCancellation] CancellationToken cancellationToken = default) where TResult : new()
+        {
+            await foreach (var item in ToEnumerableAsync<TResult>(dbContext, query, cancellationToken))
+                yield return item;
         }
 
         #endregion Execution
@@ -234,45 +349,46 @@ namespace FluentSqlKata.EFCore6
 
         #region Private Methods
 
-        private static async Task<IEnumerable<T>> ReadObjectsAsync<T>(this DbCommand cmd, CancellationToken cancellationToken = default) where T : class, new()
+        private static async IAsyncEnumerable<TResult> ReadObjectsAsync<TResult>(this DbCommand cmd, [EnumeratorCancellation] CancellationToken cancellationToken = default) where TResult : new()
         {
             // Execute query
-            using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+            using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+            if (!reader.HasRows)
+                yield break;
+
+            // Get property list from Class or Tuple (struct)
+            var properties = GetPropertiesOfModel(typeof(TResult));
+
+            // Read rows
+            while (await reader.ReadAsync(cancellationToken))
             {
-                if (!reader.HasRows)
-                    return new T[0];
+                TResult item;
 
-                var properties = GetPropertiesOfModel(typeof(T));
-
-                var result = new List<T>();
-
-                // Read rows
-                while (await reader.ReadAsync(cancellationToken))
+                // Read columns
+                if (properties.Count == 0) // Single column struct (eg. int, string or enum)
                 {
-                    T item;
+                    item = (TResult)ParseDbField(reader[0], typeof(TResult));
+                }
+                else
+                {
+                    item = (TResult)Activator.CreateInstance(typeof(TResult), true);
 
-                    // Read columns
-                    if (properties.Count == 0) // Single column struct like ToObjectAsync<int>() (eg. int, string or enum)
+                    for (int i = 0; i < reader.FieldCount; ++i)
                     {
-                        item = (T)ParseDbField(reader[0], typeof(T));
-                    }
-                    else
-                    {
-                        item = (T)Activator.CreateInstance(typeof(T), true);
+                        string columnName = reader.GetName(i);
 
-                        for (int i = 0; i < reader.FieldCount; ++i)
+                        if (properties.TryGetValue(columnName, out var mappedProperty))
                         {
-                            string columnName = reader.GetName(i);
+                            var value = reader[columnName];
+                            var propertyType = mappedProperty.Member.GetMemberType();
 
-                            if (properties.TryGetValue(columnName, out var mappedProperty))
+                            try
                             {
-                                var value = reader[columnName];
-                                var propertyType = mappedProperty.Member.GetMemberType();
+                                value = ParseDbField(value, propertyType);
 
-                                try
+                                if (!object.Equals(value, GetDefaultValue(propertyType)))
                                 {
-                                    value = ParseDbField(value, propertyType);
-
                                     var propertyItem = GetMemberItem(item, mappedProperty, properties);
 
                                     if (mappedProperty.Member.MemberType == MemberTypes.Property)
@@ -284,23 +400,21 @@ namespace FluentSqlKata.EFCore6
                                         // https://social.msdn.microsoft.com/Forums/vstudio/en-US/33284e33-d004-4b76-bc0f-50100ec46bf1/fieldinfosetvalue-dont-work-in-struct?forum=csharpgeneral
                                         object obj_ref = propertyItem;
                                         (mappedProperty.Member as FieldInfo).SetValue(obj_ref, value);
-                                        propertyItem = (T)obj_ref;
+                                        propertyItem = (TResult)obj_ref;
                                         if (mappedProperty.Parent == null)
-                                            item = (T)obj_ref;
+                                            item = (TResult)obj_ref;
                                     }
                                 }
-                                catch (Exception exc)
-                                {
-                                    throw new InvalidCastException($"Could not cast database type {value?.GetType().FullName} into the property type {propertyType.FullName} for property name {typeof(T).Name}.{mappedProperty.Member.Name}", exc);
-                                }
+                            }
+                            catch (Exception exc)
+                            {
+                                throw new InvalidCastException($"Could not cast database type {value?.GetType().FullName} into the property type {propertyType.FullName} for property name {typeof(TResult).Name}.{mappedProperty.Member.Name}", exc);
                             }
                         }
                     }
-
-                    result.Add(item);
                 }
 
-                return result.ToArray();
+                yield return item;
             }
         }
 
