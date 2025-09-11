@@ -1586,14 +1586,21 @@ namespace FluentSqlKata
 
             var name = expression.Member.Name;
 
-            while (expression.Expression is MemberExpression memberExpression 
-                && (memberExpression.Member.MemberType == MemberTypes.Property 
-                    || (memberExpression.Member.MemberType == MemberTypes.Field && memberExpression.Member.Name == "Rest" && memberExpression.Member.DeclaringType.Name.StartsWith("ValueTuple`"))
-                )
-            )
+            while (expression.Expression is MemberExpression memberExpression)
             {
-                name = memberExpression.Member.Name + "." + name;
-                expression = memberExpression;
+                if (memberExpression.Member.MemberType == MemberTypes.Property)
+                {
+                    name = memberExpression.Member.Name + "." + name;
+                    expression = memberExpression;
+                }
+                else if (memberExpression.Member.MemberType == MemberTypes.Field && memberExpression.Member.DeclaringType.Name.StartsWith("ValueTuple`") && memberExpression.Member.Name == "Rest")
+                {
+                    throw new ArgumentException("Only maximum 7 items of Tuple are supported. See https://learn.microsoft.com/en-us/dotnet/api/system.tuple-8?view=net-9.0");
+                }
+                else
+                {
+                    break;
+                }
             }
 
             return name;
