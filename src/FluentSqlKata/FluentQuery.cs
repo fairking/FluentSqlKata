@@ -141,6 +141,16 @@ namespace FluentSqlKata
 		}
 
         /// <summary>
+        /// Example: SelectRaw(() => dto.FullName, queryRaw: "? + ' ' + ?", "John", "Smith")
+        /// Results: SELECT 'John' + ' ' + 'Smith' AS FullName
+        /// </summary>
+        public static Query SelectRaw<A>(this Query query, Expression<Func<A>> alias, string queryRaw, params object[] bindings)
+        {
+            var aliasName = Alias(alias);
+            return query.SelectRaw($"{queryRaw} AS {aliasName}", bindings);
+        }
+
+        /// <summary>
         /// Example: SelectRawFormat(() => dto.FullName, queryFormat: "{0} + ' ' + {1}", () => cnt.FirstName, () => cnt.LastName)
         /// Results: SELECT FirstName + ' ' + LastName AS FullName
         /// </summary>
@@ -184,13 +194,21 @@ namespace FluentSqlKata
             return query;
         }
 
+        /// <summary>
+        /// Example: Select(() => dto.Name, () => cnt.FirstName)
+        /// Results: SELECT cnt.FirstName AS Name
+        /// </summary>
         public static Query Select<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
-		{
-			var aliasName = Alias(alias);
-			return query.Select(aliasName, column);
-		}
+        {
+            var aliasName = Alias(alias);
+            return query.Select(aliasName, column);
+        }
 
-		public static Query Select<T>(this Query query, string alias, Expression<Func<T>> column)
+        /// <summary>
+        /// Example: Select("Name", () => cnt.FirstName)
+        /// Results: SELECT cnt.FirstName AS Name
+        /// </summary>
+        public static Query Select<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
 			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
 			query.GetWrapper().Selects.Add(alias, columnName);
@@ -198,6 +216,10 @@ namespace FluentSqlKata
 			return query;
 		}
 
+        /// <summary>
+        /// Example: Select(() => cnt.FirstName)
+        /// Results: SELECT cnt.FirstName
+        /// </summary>
 		public static Query Select<T>(this Query query, Expression<Func<T>> column)
 		{
 			var columnName = Property(column);
@@ -206,6 +228,11 @@ namespace FluentSqlKata
 			return query.SelectRaw(fullName);
 		}
 
+        /// <summary>
+        /// Prints out all the available columns of the entity T
+        /// Example: Select<Customer>()
+        /// Results: SELECT Name, Address, Country, ... FROM Customers
+        /// </summary>
 		public static Query SelectAll<T>(this Query query)
         {
             query.From<T>();
@@ -220,6 +247,11 @@ namespace FluentSqlKata
             return query;
         }
 
+        /// <summary>
+        /// Prints out all the available columns of the entity <paramref name="alias"/>
+        /// Example: Select(() => cust)
+        /// Results: SELECT Name, Address, Country, ... FROM Customers
+        /// </summary>
 		public static Query SelectAll<T>(this Query query, Expression<Func<T>> alias)
 		{
 			query.From(alias);
@@ -234,6 +266,10 @@ namespace FluentSqlKata
 			return query;
 		}
 
+        /// <summary>
+        /// Example: SelectFunc(() => dto.Name, () => cnt.FirstName, "SUM", true)
+        /// Results: SELECT SUM(cnt.FirstName as Name)
+        /// </summary>
 		public static Query SelectFunc<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column, string func, bool aggregate = false)
 		{
 			var aliasName = Alias<A>(alias);
@@ -241,9 +277,13 @@ namespace FluentSqlKata
 			return query;
 		}
 
+        /// <summary>
+        /// Example: SelectFunc("Name", () => cnt.FirstName, "SUM", true)
+        /// Results: SELECT SUM(cnt.FirstName as Name)
+        /// </summary>
 		public static Query SelectFunc<T>(this Query query, string alias, Expression<Func<T>> column, string func, bool aggregate = false)
 		{
-			var columnName = $"{func}({AliasFromColumn(column)}.{Property(column)})";
+			var columnName = $"{func}({AliasFromColumn(column)}.{Column(column)})";
 			if (aggregate)
 				query.GetWrapper().SelectAggrs.Add(alias, columnName);
 			else
@@ -1437,6 +1477,14 @@ namespace FluentSqlKata
                 return ifFalse != null ? ifFalse.Invoke(query) : query;
         }
 
+        /// <summary>
+        /// Example: WithVariable("@Today", DateTime.Today)
+        /// Results: DECLARE @Today date = '04-18-2020';
+        /// Then the declared variables can be used in other parts of the query
+        /// </summary>
+        /// <param name="key">Valiable name</param>
+        /// <param name="value">Variable value</param>
+        /// <returns></returns>
         public static Query WithVariable(this Query query, string key, object value)
         {
             query.Variables.Add(key, value);
