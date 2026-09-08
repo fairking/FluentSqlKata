@@ -7,7 +7,14 @@ Simple and very concrete, fluent way to build sql queries.
 - Fluent queries (you have more freedom than with `Linq`, `HQL` or `QueryOver`)
 - OrderByAlias (Dynamic way to order by aliases at runtime)
 - Can be easily used along with Entity Framework Core without huge code changes (see [FluentSqlKata.EFCore](https://github.com/fairking/FluentSqlKata/tree/main/src/FluentSqlKata.EFCore/DbContextHelper.cs))
-- All standart SqlKata features remain without changes
+- All standard SqlKata features remain without changes
+
+## Notes
+
+- Select, raw and aggregate aliases must be unique within the same query; a duplicate registration throws an `ArgumentException` naming the conflicting alias.
+- The raw set-operation helpers (`CombineRawFormat`, `UnionRawFormat`, `ExceptRawFormat`, `IntersectRawFormat`) append the raw SQL verbatim; the keyword/operator (e.g. `UNION`) must be part of the raw statement.
+- `FromRaw`/`FromRawFormat` do not wrap the expression in parentheses; include them in the raw SQL when required.
+- For `Query` instances, SqlKata's own instance methods (`SelectCount`, `GroupByRaw`, ...) take precedence over same-named fluent extensions when the call shape matches.
 
 ## Installation
 
@@ -151,14 +158,14 @@ public void OrderByAlias()
 
     var query = FluentQuery.Query()
         .From(() => myCust)
-        .SelectRaw(() => model.Name, "ISNULL({0}, 'Uknown')", () => myCust.Name)
+        .SelectRawFormat(() => model.Name, "ISNULL({0}, 'Unknown')", () => myCust.Name)
         .OrderByAlias(() => model.Name)
         ;
 
     var query_str = new SqlServerCompiler().Compile(query).ToString();
 
     Assert.NotNull(query_str);
-    Assert.Equal("SELECT ISNULL(myCust.Name, 'Uknown') AS Name FROM [Customer] AS [myCust] ORDER BY ISNULL(myCust.Name, 'Uknown')", query_str);
+    Assert.Equal("SELECT ISNULL(myCust.Name, 'Unknown') AS Name FROM [Customer] AS [myCust] ORDER BY ISNULL(myCust.Name, 'Unknown')", query_str);
 }
 ```
 
@@ -170,7 +177,7 @@ public void OrderByAlias()
 
 If you have any issues please provide us with Unit Test Example.
 
-To become a contributer please create an issue ticket with such enqury.
+To become a contributor please create an issue ticket with such enquiry.
 
 ## Donations
 

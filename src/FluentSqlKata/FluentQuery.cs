@@ -7,7 +7,11 @@ using System.Reflection;
 
 namespace FluentSqlKata
 {
-    /// <summary>Fluent extension methods to build SqlKata queries using strongly-typed property expressions.</summary>
+    /// <summary>
+    /// Fluent extension methods to build SqlKata queries using strongly-typed property expressions.
+    /// Raw-format methods (e.g. WhereRawFormat, SelectRawFormat) replace {i} placeholders with column
+    /// expressions; escape literal braces in the raw SQL by doubling them ({{ and }}).
+    /// </summary>
     public static class FluentQuery
     {
         #region Query/From
@@ -95,56 +99,56 @@ namespace FluentSqlKata
             return query.WithRaw(Alias(alias), queryRaw, bindings: bindings);
         }
 
-        /// <summary>Appends the raw formatted statement to the query when compiled (SqlKata CombineRaw); {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>Appends the raw formatted statement to the query when compiled (SqlKata CombineRaw); the raw SQL must already include its keyword/operator (e.g. "UNION SELECT ..."); {i} placeholders are replaced with column expressions.</summary>
         public static Query CombineRawFormat(this Query query, string queryFormat, params Expression<Func<object>>[] columns)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
             return query.CombineRaw(queryRaw);
         }
 
-        /// <summary>Appends the raw formatted statement to the query when compiled (SqlKata CombineRaw); {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>Appends the raw formatted statement to the query when compiled (SqlKata CombineRaw); the raw SQL must already include its keyword/operator (e.g. "UNION SELECT ..."); {i} placeholders are replaced with column expressions.</summary>
         public static Query CombineRawFormat(this Query query, string queryFormat, Expression<Func<object>>[] columns, object[] bindings)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
             return query.CombineRaw(queryRaw, bindings: bindings);
         }
 
-        /// <summary>Excludes the results of the raw formatted statement from the query result (EXCEPT); {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>Appends the raw formatted statement for an EXCEPT set operation when compiled (SqlKata ExceptRaw); the raw SQL must already include the EXCEPT keyword; {i} placeholders are replaced with column expressions.</summary>
         public static Query ExceptRawFormat(this Query query, string queryFormat, params Expression<Func<object>>[] columns)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
             return query.ExceptRaw(queryRaw);
         }
 
-        /// <summary>Excludes the results of the raw formatted statement from the query result (EXCEPT); {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>Appends the raw formatted statement for an EXCEPT set operation when compiled (SqlKata ExceptRaw); the raw SQL must already include the EXCEPT keyword; {i} placeholders are replaced with column expressions.</summary>
         public static Query ExceptRawFormat(this Query query, string queryFormat, Expression<Func<object>>[] columns, object[] bindings)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
             return query.ExceptRaw(queryRaw, bindings: bindings);
         }
 
-        /// <summary>Intersects the query results with the raw formatted statement (INTERSECT); {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>Appends the raw formatted statement for an INTERSECT set operation when compiled (SqlKata IntersectRaw); the raw SQL must already include the INTERSECT keyword; {i} placeholders are replaced with column expressions.</summary>
         public static Query IntersectRawFormat(this Query query, string queryFormat, params Expression<Func<object>>[] columns)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
             return query.IntersectRaw(queryRaw);
         }
 
-        /// <summary>Intersects the query results with the raw formatted statement (INTERSECT); {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>Appends the raw formatted statement for an INTERSECT set operation when compiled (SqlKata IntersectRaw); the raw SQL must already include the INTERSECT keyword; {i} placeholders are replaced with column expressions.</summary>
         public static Query IntersectRawFormat(this Query query, string queryFormat, Expression<Func<object>>[] columns, object[] bindings)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
             return query.IntersectRaw(queryRaw, bindings: bindings);
         }
 
-        /// <summary>Unions the query results with the raw formatted statement (UNION); {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>Appends the raw formatted statement for a UNION set operation when compiled (SqlKata UnionRaw); the raw SQL must already include the UNION keyword; {i} placeholders are replaced with column expressions.</summary>
         public static Query UnionRawFormat(this Query query, string queryFormat, params Expression<Func<object>>[] columns)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
             return query.UnionRaw(queryRaw);
         }
 
-        /// <summary>Unions the query results with the raw formatted statement (UNION); {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>Appends the raw formatted statement for a UNION set operation when compiled (SqlKata UnionRaw); the raw SQL must already include the UNION keyword; {i} placeholders are replaced with column expressions.</summary>
         public static Query UnionRawFormat(this Query query, string queryFormat, Expression<Func<object>>[] columns, object[] bindings)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
@@ -200,7 +204,7 @@ namespace FluentSqlKata
         public static Query SelectRawFormat(this Query query, string alias, string queryFormat, params Expression<Func<object>>[] columns)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
-            query.GetWrapper().SelectsRaw.Add(alias, queryRaw);
+            RegisterAlias(query.GetWrapper().SelectsRaw, alias, queryRaw);
             query.SelectRaw($"{queryRaw} AS {alias}");
             return query;
         }
@@ -212,7 +216,7 @@ namespace FluentSqlKata
         public static Query SelectRawFormat(this Query query, string alias, string queryFormat, Expression<Func<object>>[] columns, object[] bindings)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns: columns);
-            query.GetWrapper().SelectsRaw.Add(alias, queryRaw);
+            RegisterAlias(query.GetWrapper().SelectsRaw, alias, queryRaw);
             query.SelectRaw($"{queryRaw} AS {alias}", bindings: bindings);
             return query;
         }
@@ -234,7 +238,7 @@ namespace FluentSqlKata
         public static Query Select<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
 			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-			query.GetWrapper().Selects.Add(alias, columnName);
+			RegisterAlias(query.GetWrapper().Selects, alias, columnName);
 			query.Select($"{columnName} AS {alias}");
 			return query;
 		}
@@ -247,23 +251,23 @@ namespace FluentSqlKata
 		{
 			var columnName = Property(column);
 			var fullName = $"{AliasFromColumn(column)}.{columnName}";
-			query.GetWrapper().Selects.Add(columnName, fullName);
+			RegisterAlias(query.GetWrapper().Selects, columnName, fullName);
 			return query.SelectRaw(fullName);
 		}
 
         /// <summary>
-        /// Prints out all the available columns of the entity T
+        /// Prints out all the available columns of the entity T and sets (overriding any existing) the FROM clause to its table.
         /// Example: Select&lt;Customer&gt;()
         /// Results: SELECT Name, Address, Country, ... FROM Customers
         /// </summary>
-		public static Query SelectAll<T>(this Query query)
+        public static Query SelectAll<T>(this Query query)
         {
             query.From<T>();
 
             foreach (var col in GetColumns<T>())
             {
                 var columnName = $"{col.Value}";
-                query.GetWrapper().Selects.Add(col.Key, columnName);
+                RegisterAlias(query.GetWrapper().Selects, col.Key, columnName);
                 query.Select($"{columnName} AS {col.Key}");
             }
 
@@ -271,7 +275,7 @@ namespace FluentSqlKata
         }
 
         /// <summary>
-        /// Prints out all the available columns of the entity <paramref name="alias"/>
+        /// Prints out all the available columns of the entity <paramref name="alias"/> and sets (overriding any existing) the FROM clause to its table.
         /// Example: Select(() => cust)
         /// Results: SELECT Name, Address, Country, ... FROM Customers
         /// </summary>
@@ -282,7 +286,7 @@ namespace FluentSqlKata
 			foreach (var col in GetColumns<T>())
 			{
 				var columnName = $"{Alias(alias)}.{col.Value}";
-				query.GetWrapper().Selects.Add(col.Key, columnName);
+				RegisterAlias(query.GetWrapper().Selects, col.Key, columnName);
 				query.Select($"{columnName} AS {col.Key}");
 			}
 
@@ -308,9 +312,9 @@ namespace FluentSqlKata
 		{
 			var columnName = $"{func}({AliasFromColumn(column)}.{Column(column)})";
 			if (aggregate)
-				query.GetWrapper().SelectAggrs.Add(alias, columnName);
+				RegisterAlias(query.GetWrapper().SelectAggrs, alias, columnName);
 			else
-				query.GetWrapper().Selects.Add(alias, columnName);
+				RegisterAlias(query.GetWrapper().Selects, alias, columnName);
 			query.SelectRaw($"{columnName} AS {alias}");
 			return query;
 		}
@@ -868,14 +872,14 @@ namespace FluentSqlKata
             return query;
         }
 
-        /// <summary>Adds a CROSS JOIN to the given table (by alias or by table string).</summary>
+        /// <summary>Adds a CROSS JOIN to the entity type's table with the given alias, or to the given table string.</summary>
         public static Query CrossJoin<A>(this Query query, Expression<Func<A>> alias)
         {
-            query.CrossJoin(Alias(alias));
+            query.CrossJoin($"{Table<A>()} AS {Alias(alias)}");
             return query;
         }
 
-        /// <summary>Adds a CROSS JOIN to the given table (by alias or by table string).</summary>
+        /// <summary>Adds a CROSS JOIN to the given table string.</summary>
         public static Query CrossJoin<A>(this Query query, string table)
         {
             query.CrossJoin(table);
@@ -1132,24 +1136,24 @@ namespace FluentSqlKata
 		public static Query AsCount<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
 			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-			query.GetWrapper().SelectAggrs.Add(alias, columnName);
-			query.AsCount(new[] { $"{columnName} AS {alias}" });
+			RegisterAlias(query.GetWrapper().SelectAggrs, alias, $"COUNT({columnName})");
+			query.SelectRaw($"COUNT({columnName}) AS {alias}");
 			return query;
 		}
 
-		/// <summary>Selects the AVG(...) aggregate of the column expression aliased by the dto model expression.</summary>
-		public static Query AsAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
+        /// <summary>Selects the AVG(...) aggregate of the column expression aliased by the dto model expression.</summary>
+        public static Query AsAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			var aliasName = Alias(alias);
-			return query.AsAvg(aliasName, alias);
+			return query.AsAvg(aliasName, column);
 		}
 
 		/// <summary>Selects the AVG(...) aggregate of the column expression aliased by the dto model expression.</summary>
 		public static Query AsAvg<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
 			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-			query.GetWrapper().SelectAggrs.Add(alias, columnName);
-			query.AsAvg($"{columnName} AS {alias}");
+			RegisterAlias(query.GetWrapper().SelectAggrs, alias, $"AVG({columnName})");
+			query.SelectRaw($"AVG({columnName}) AS {alias}");
 			return query;
 		}
 
@@ -1164,8 +1168,8 @@ namespace FluentSqlKata
 		public static Query AsAverage<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
 			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-			query.GetWrapper().SelectAggrs.Add(alias, columnName);
-			query.AsAverage($"{columnName} AS {alias}");
+			RegisterAlias(query.GetWrapper().SelectAggrs, alias, $"AVG({columnName})");
+			query.SelectRaw($"AVG({columnName}) AS {alias}");
 			return query;
 		}
 
@@ -1180,8 +1184,8 @@ namespace FluentSqlKata
 		public static Query AsSum<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
 			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-			query.GetWrapper().SelectAggrs.Add(alias, columnName);
-			query.AsSum($"{columnName} AS {alias}");
+			RegisterAlias(query.GetWrapper().SelectAggrs, alias, $"SUM({columnName})");
+			query.SelectRaw($"SUM({columnName}) AS {alias}");
 			return query;
 		}
 
@@ -1196,8 +1200,8 @@ namespace FluentSqlKata
 		public static Query AsMax<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
 			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-			query.GetWrapper().SelectAggrs.Add(alias, columnName);
-			query.AsMax($"{columnName} AS {alias}");
+			RegisterAlias(query.GetWrapper().SelectAggrs, alias, $"MAX({columnName})");
+			query.SelectRaw($"MAX({columnName}) AS {alias}");
 			return query;
 		}
 
@@ -1212,8 +1216,8 @@ namespace FluentSqlKata
 		public static Query AsMin<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
 			var columnName = $"{AliasFromColumn(column)}.{Property(column)}";
-			query.GetWrapper().SelectAggrs.Add(alias, columnName);
-			query.AsMin($"{columnName} AS {alias}");
+			RegisterAlias(query.GetWrapper().SelectAggrs, alias, $"MIN({columnName})");
+			query.SelectRaw($"MIN({columnName}) AS {alias}");
 			return query;
 		}
 
@@ -1225,7 +1229,11 @@ namespace FluentSqlKata
             return query;
         }
 
-        /// <summary>Adds a GROUP BY built from a raw formatted expression; {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>
+        /// Adds a GROUP BY built from a raw formatted expression; {i} placeholders are replaced with column expressions.
+        /// Note: for Query instances SqlKata's own instance method GroupByRaw(string, params object[]) takes precedence;
+        /// supply the raw expression fully composed when calling on a Query.
+        /// </summary>
         public static Query GroupByRaw<T>(this Query query, string queryFormat, params Expression<Func<object>>[] columns)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns);
@@ -1233,7 +1241,11 @@ namespace FluentSqlKata
             return query;
         }
 
-        /// <summary>Adds a GROUP BY built from a raw formatted expression; {i} placeholders are replaced with column expressions.</summary>
+        /// <summary>
+        /// Adds a GROUP BY built from a raw formatted expression; {i} placeholders are replaced with column expressions.
+        /// Note: for Query instances SqlKata's own instance method GroupByRaw(string, params object[]) takes precedence;
+        /// supply the raw expression fully composed when calling on a Query.
+        /// </summary>
         public static Query GroupByRaw<T>(this Query query, string queryFormat, Expression<Func<object>>[] columns, object[] bindings)
         {
             var queryRaw = FormatQueryRaw(queryFormat, columns);
@@ -1680,7 +1692,7 @@ namespace FluentSqlKata
         /// <param name="key">Variable name</param>
         /// <param name="value">Variable value</param>
         /// <returns></returns>
-        [Obsolete("The method will be removed in future. Please use .Declare() instead.")]
+        [Obsolete("The method will be removed in future. Please use .Define() instead.")]
         public static Query WithVariable(this Query query, string key, object value)
         {
             query.Variables.Add(key, value);
@@ -1765,7 +1777,18 @@ namespace FluentSqlKata
 
         private static FluentQueryWrapper GetWrapper(this Query query)
         {
-            return query as FluentQueryWrapper ?? throw new Exception("Cannot execute operation because SqlKata query wasn't instantiated from the FluentQuery. Use 'FluentQuery.Query()' instead of 'new Query()'.");
+            return query as FluentQueryWrapper ?? throw new InvalidOperationException("Cannot execute operation because SqlKata query wasn't instantiated from the FluentQuery. Use 'FluentQuery.Query()' instead of 'new Query()'.");
+        }
+
+        /// <summary>
+        /// Registers an alias in one of the query's alias dictionaries, throwing a descriptive
+        /// exception when the alias is already taken (duplicate registrations would silently
+        /// lose the previous mapping otherwise).
+        /// </summary>
+        private static void RegisterAlias(IDictionary<string, string> registrations, string alias, string expression)
+        {
+            if (!registrations.TryAdd(alias, expression))
+                throw new ArgumentException($"The alias '{alias}' is already registered in the query. Each Select, raw or aggregate alias must be unique within the same query; use a different alias name.", nameof(alias));
         }
 
         /// <summary>
@@ -1865,6 +1888,9 @@ namespace FluentSqlKata
 
             foreach (var prop in properties)
             {
+                if (prop.GetIndexParameters().Length > 0)
+                    continue;
+
                 if (prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>() != null || prop.GetCustomAttribute<IgnoreAttribute>() != null)
                     continue;
 

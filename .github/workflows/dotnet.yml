@@ -1,0 +1,26 @@
+name: dotnet
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build
+        run: dotnet build src/FluentSqlKata.sln --configuration Release
+
+      - name: Test
+        run: dotnet test src/FluentSqlKata.sln --configuration Release --no-build --verbosity minimal
