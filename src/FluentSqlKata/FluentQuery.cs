@@ -868,14 +868,14 @@ namespace FluentSqlKata
             return query;
         }
 
-        /// <summary>Adds a CROSS JOIN to the given table (by alias or by table string).</summary>
+        /// <summary>Adds a CROSS JOIN to the entity type's table with the given alias, or to the given table string.</summary>
         public static Query CrossJoin<A>(this Query query, Expression<Func<A>> alias)
         {
-            query.CrossJoin(Alias(alias));
+            query.CrossJoin($"{Table<A>()} AS {Alias(alias)}");
             return query;
         }
 
-        /// <summary>Adds a CROSS JOIN to the given table (by alias or by table string).</summary>
+        /// <summary>Adds a CROSS JOIN to the given table string.</summary>
         public static Query CrossJoin<A>(this Query query, string table)
         {
             query.CrossJoin(table);
@@ -1141,8 +1141,8 @@ namespace FluentSqlKata
 		public static Query AsAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			var aliasName = Alias(alias);
-			return query.AsAvg(aliasName, alias);
-		}
+            return query.AsAvg(aliasName, column);
+        }
 
 		/// <summary>Selects the AVG(...) aggregate of the column expression aliased by the dto model expression.</summary>
 		public static Query AsAvg<T>(this Query query, string alias, Expression<Func<T>> column)
@@ -1680,7 +1680,7 @@ namespace FluentSqlKata
         /// <param name="key">Variable name</param>
         /// <param name="value">Variable value</param>
         /// <returns></returns>
-        [Obsolete("The method will be removed in future. Please use .Declare() instead.")]
+        [Obsolete("The method will be removed in future. Please use .Define() instead.")]
         public static Query WithVariable(this Query query, string key, object value)
         {
             query.Variables.Add(key, value);
@@ -1865,6 +1865,9 @@ namespace FluentSqlKata
 
             foreach (var prop in properties)
             {
+                if (prop.GetIndexParameters().Length > 0)
+                    continue;
+                
                 if (prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>() != null || prop.GetCustomAttribute<IgnoreAttribute>() != null)
                     continue;
 
