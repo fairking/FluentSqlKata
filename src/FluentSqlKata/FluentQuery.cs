@@ -777,18 +777,21 @@ namespace FluentSqlKata
             return query;
         }
 
+        /// <summary>Adds a CROSS JOIN to the entity type's table with the given alias, or to the given table string.</summary>
         public static Query CrossJoin<A>(this Query query, Expression<Func<A>> alias)
         {
-            query.CrossJoin(Alias(alias));
+            query.CrossJoin($"{Table<A>()} AS {Alias(alias)}");
             return query;
         }
 
+        /// <summary>Adds a CROSS JOIN to the given table string.</summary>
         public static Query CrossJoin<A>(this Query query, string table)
         {
             query.CrossJoin(table);
             return query;
         }
 
+        /// <summary>Adds an ON condition between the joined column expressions to the join.</summary>
         public static Join On<J1, J2>(this Join join, Expression<Func<J1>> firstColumn, Expression<Func<J2>> secondColumn, string op = "=")
         {
             join.On(
@@ -798,6 +801,7 @@ namespace FluentSqlKata
             return join;
         }
 
+        /// <summary>Adds an OR condition between the joined column expressions to the join.</summary>
         public static Join OrOn<J1, J2>(this Join join, Expression<Func<J1>> firstColumn, Expression<Func<J2>> secondColumn, string op = "=")
         {
             join.OrOn(
@@ -807,6 +811,7 @@ namespace FluentSqlKata
             return join;
         }
 
+        /// <summary>Adds a join to the given table (by entity type expression) within an existing join clause.</summary>
         public static Join JoinWith<A>(this Join join, Expression<Func<A>> alias)
         {
             join.JoinWith(Table<A>(), alias);
@@ -1018,8 +1023,8 @@ namespace FluentSqlKata
 		public static Query AsAvg<A, T>(this Query query, Expression<Func<A>> alias, Expression<Func<T>> column)
 		{
 			var aliasName = Alias(alias);
-			return query.AsAvg(aliasName, alias);
-		}
+            return query.AsAvg(aliasName, column);
+        }
 
 		public static Query AsAvg<T>(this Query query, string alias, Expression<Func<T>> column)
 		{
@@ -1485,6 +1490,7 @@ namespace FluentSqlKata
         /// <param name="key">Valiable name</param>
         /// <param name="value">Variable value</param>
         /// <returns></returns>
+        [Obsolete("The method will be removed in future. Please use .Define() instead.")]
         public static Query WithVariable(this Query query, string key, object value)
         {
             query.Variables.Add(key, value);
@@ -1670,6 +1676,9 @@ namespace FluentSqlKata
 
             foreach (var prop in properties)
             {
+                if (prop.GetIndexParameters().Length > 0)
+                    continue;
+                
                 if (prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>() != null || prop.GetCustomAttribute<IgnoreAttribute>() != null)
                     continue;
 
