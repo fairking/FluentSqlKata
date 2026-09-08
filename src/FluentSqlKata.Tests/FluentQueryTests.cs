@@ -199,8 +199,8 @@ namespace FluentSqlKata.Tests
             var query_str = new SqlServerCompiler().Compile(query).ToString();
 
             Assert.NotNull(query_str);
-            // TODO: https://github.com/sqlkata/querybuilder/issues/643#issuecomment-1709879159
-            Assert.Equal("SELECT DISTINCT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id] FROM [Customer] AS [myCust] ORDER BY (SELECT 0) OFFSET 10 ROWS FETCH NEXT 20 ROWS ONLY", query_str);
+            // SqlKata 3.x changed the default SqlServer pagination (https://github.com/sqlkata/querybuilder/issues/643)
+            Assert.Equal("SELECT * FROM (SELECT DISTINCT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id], ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS [row_num] FROM [Customer] AS [myCust]) AS [results_wrapper] WHERE [row_num] BETWEEN 11 AND 30", query_str);
         }
 
 		[Fact]
@@ -217,8 +217,8 @@ namespace FluentSqlKata.Tests
 			var query_str = new SqlServerCompiler().Compile(query).ToString();
 
 			Assert.NotNull(query_str);
-            // TODO: https://github.com/sqlkata/querybuilder/issues/643#issuecomment-1709879159
-            Assert.Equal("SELECT DISTINCT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id] FROM [Customer] AS [myCust] ORDER BY (SELECT 0) OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY", query_str);
+            // SqlKata 3.x changed the default SqlServer pagination (https://github.com/sqlkata/querybuilder/issues/643)
+            Assert.Equal("SELECT * FROM (SELECT DISTINCT [myCust].[Name] AS [Name], [myCust].[Id] AS [Id], ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS [row_num] FROM [Customer] AS [myCust]) AS [results_wrapper] WHERE [row_num] BETWEEN 11 AND 20", query_str);
 		}
 
 		[Fact]
