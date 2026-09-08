@@ -1477,12 +1477,13 @@ namespace FluentSqlKata
                 return ifFalse != null ? ifFalse.Invoke(query) : query;
         }
 
+        [Obsolete("The method will be removed in future. Please use .Declare() instead.")]
         /// <summary>
         /// Example: WithVariable("@Today", DateTime.Today)
         /// Results: DECLARE @Today date = '04-18-2020';
         /// Then the declared variables can be used in other parts of the query
         /// </summary>
-        /// <param name="key">Valiable name</param>
+        /// <param name="key">Variable name</param>
         /// <param name="value">Variable value</param>
         /// <returns></returns>
         public static Query WithVariable(this Query query, string key, object value)
